@@ -1,6 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { runScreener } from "@/lib/binance";
 import { CPRResult } from "@/lib/cpr";
+import {
+  shouldAutoScan,
+  markScannedToday,
+  hasScannedToday,
+  getNextScanIST,
+  formatISTTime,
+  formatCountdown,
+  getLastScanDate,
+} from "@/lib/scheduler";
 import {
   ArrowUpDown,
   TrendingUp,
@@ -10,6 +19,8 @@ import {
   ChevronUp,
   ChevronDown,
   Search,
+  Clock,
+  CalendarCheck,
 } from "lucide-react";
 
 type SortKey =
@@ -22,10 +33,10 @@ type SortKey =
 
 type SortDir = "asc" | "desc";
 
-function fmt(n: number, decimals = 4): string {
+function fmt(n: number): string {
   if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
   if (n >= 1) return n.toFixed(4);
-  return n.toFixed(decimals > 4 ? decimals : 6);
+  return n.toFixed(6);
 }
 
 function fmtPct(n: number): string {
@@ -61,8 +72,15 @@ export default function Screener() {
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [error, setError] = useState("");
+  const [countdown, setCountdown] = useState("");
+  const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
+  const [alreadyScannedToday] = useState(() => hasScannedToday());
+  const [lastScanDate] = useState(() => getLastScanDate());
+  const scanRef = useRef(false);
 
-  const scan = useCallback(async () => {
+  const doScan = useCallback(async () => {
+    if (scanRef.current) return;
+    scanRef.current = true;
     setStatus("scanning");
     setAllResults([]);
     setFiltered([]);
@@ -73,48 +91,55 @@ export default function Screener() {
       const results = await runScreener((done, total, symbol) => {
         setProgress({ done, total, symbol });
       });
-
       setAllResults(results);
-      const passing = results.filter((r) => r.passes);
-      setFiltered(passing);
+      setFiltered(results.filter((r) => r.passes));
       setStatus("done");
+      markScannedToday();
+      setNextScanUtc(getNextScanIST());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
       setStatus("error");
+    } finally {
+      scanRef.current = false;
     }
   }, []);
+
+  useEffect(() => {
+    if (shouldAutoScan()) {
+      doScan();
+    }
+  }, [doScan]);
+
+  useEffect(() => {
+    const tick = () => setCountdown(formatCountdown(nextScanUtc));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [nextScanUtc]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDir(key === "symbol" ? "asc" : "asc");
+      setSortDir("asc");
     }
   };
 
   const displayed = (showAll ? allResults : filtered)
-    .filter((r) =>
-      r.symbol.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter((r) => r.symbol.toLowerCase().includes(search.toLowerCase()))
     .slice()
     .sort((a, b) => {
       const av = getVal(a, sortKey);
       const bv = getVal(b, sortKey);
       if (typeof av === "string" && typeof bv === "string") {
-        return sortDir === "asc"
-          ? av.localeCompare(bv)
-          : bv.localeCompare(av);
+        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       }
-      const an = av as number;
-      const bn = bv as number;
-      return sortDir === "asc" ? an - bn : bn - an;
+      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
     });
 
   const progressPct =
-    progress.total > 0
-      ? Math.round((progress.done / progress.total) * 100)
-      : 0;
+    progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
 
   const SortIcon = ({ k }: { k: SortKey }) =>
     sortKey === k ? (
@@ -157,7 +182,7 @@ export default function Screener() {
         </div>
 
         {/* CPR Legend */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {[
             {
               label: "CPR = Central Pivot Range",
@@ -187,10 +212,49 @@ export default function Screener() {
           ))}
         </div>
 
-        {/* Scan Button */}
+        {/* Scheduler Status Bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-lg border border-border bg-card">
+          {alreadyScannedToday && status !== "scanning" ? (
+            <div className="flex items-center gap-2 text-sm text-accent">
+              <CalendarCheck className="w-4 h-4" />
+              <span>
+                Scanned today ({lastScanDate}) — CPR data is fresh
+              </span>
+            </div>
+          ) : status === "scanning" ? (
+            <div className="flex items-center gap-2 text-sm text-primary">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Auto-scan running…</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span>
+                Daily scan scheduled at{" "}
+                <span className="text-foreground font-medium">
+                  5:31 AM IST
+                </span>
+              </span>
+            </div>
+          )}
+
+          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="w-3.5 h-3.5" />
+            <span>
+              Next scan:{" "}
+              <span className="text-foreground font-mono">
+                {formatISTTime(nextScanUtc)}
+              </span>
+              {" · "}
+              <span className="text-primary font-mono">{countdown}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Manual Scan Controls */}
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <button
-            onClick={scan}
+            onClick={doScan}
             disabled={status === "scanning"}
             className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -199,14 +263,21 @@ export default function Screener() {
             ) : (
               <Zap className="w-4 h-4" />
             )}
-            {status === "scanning" ? "Scanning..." : status === "done" ? "Re-scan" : "Run Screener"}
+            {status === "scanning"
+              ? "Scanning…"
+              : status === "done"
+              ? "Re-scan Now"
+              : "Scan Now"}
           </button>
+          <span className="text-xs text-muted-foreground">
+            Manual scan overrides the daily schedule
+          </span>
 
           {status === "done" && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ml-auto">
               <span className="text-sm text-muted-foreground">
                 <span className="text-accent font-bold">{filtered.length}</span>{" "}
-                coins match out of{" "}
+                matches out of{" "}
                 <span className="text-foreground font-medium">
                   {allResults.length}
                 </span>{" "}
@@ -216,7 +287,7 @@ export default function Screener() {
                 onClick={() => setShowAll((v) => !v)}
                 className="text-xs px-3 py-1 rounded border border-border bg-secondary text-secondary-foreground hover:bg-muted transition-colors"
               >
-                {showAll ? "Show Matches Only" : "Show All Scanned"}
+                {showAll ? "Matches Only" : "Show All"}
               </button>
             </div>
           )}
@@ -260,7 +331,7 @@ export default function Screener() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Filter by symbol..."
+                  placeholder="Filter by symbol…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
@@ -278,14 +349,8 @@ export default function Screener() {
                     <tr className="border-b border-border bg-muted/40">
                       {[
                         { key: "symbol" as SortKey, label: "Symbol" },
-                        {
-                          key: "todayCPR.pivot" as SortKey,
-                          label: "Today Pivot",
-                        },
-                        {
-                          key: "todayCPR.widthPct" as SortKey,
-                          label: "Today Width%",
-                        },
+                        { key: "todayCPR.pivot" as SortKey, label: "Today Pivot" },
+                        { key: "todayCPR.widthPct" as SortKey, label: "Today Width%" },
                         { key: "compressionRatio" as SortKey, label: "Compression%" },
                         { key: "change24h" as SortKey, label: "24h Change" },
                         { key: "quoteVolume" as SortKey, label: "Volume" },
@@ -333,9 +398,7 @@ export default function Screener() {
                           <div className="text-xs text-muted-foreground">
                             TC: {fmt(r.todayCPR.tc)}
                           </div>
-                          <div className="font-medium">
-                            {fmt(r.todayCPR.pivot)}
-                          </div>
+                          <div className="font-medium">{fmt(r.todayCPR.pivot)}</div>
                           <div className="text-xs text-muted-foreground">
                             BC: {fmt(r.todayCPR.bc)}
                           </div>
@@ -436,10 +499,9 @@ export default function Screener() {
 
         {/* Footer */}
         <div className="mt-8 text-xs text-muted-foreground text-center">
-          Data from Binance Public API. Scans top 200 USDT pairs by volume.
-          CPR calculated from completed daily candles.
+          Data from Binance Public API · Scans top 200 USDT pairs by volume · CPR from completed daily candles
           <br />
-          Not financial advice. Do your own research.
+          Auto-scans once daily at 5:31 AM IST · Not financial advice
         </div>
       </div>
     </div>
