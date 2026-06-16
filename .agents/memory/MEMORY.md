@@ -1,0 +1,1 @@
+- [Pending features](pending-features.md) — Telegram bot alert + merge CPR screener into Pivot-trader site (both deferred by user)
