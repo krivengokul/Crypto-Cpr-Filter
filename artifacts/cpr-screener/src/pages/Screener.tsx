@@ -352,7 +352,7 @@ export default function Screener() {
                         { key: "todayCPR.pivot" as SortKey, label: "Today Pivot" },
                         { key: "todayCPR.widthPct" as SortKey, label: "Today Width%" },
                         { key: "compressionRatio" as SortKey, label: "Compression%" },
-                        { key: "change24h" as SortKey, label: "24h Change" },
+                        { key: "change24h" as SortKey, label: "Change (5:30 AM IST)" },
                         { key: "quoteVolume" as SortKey, label: "Volume" },
                       ].map((col) => (
                         <th
