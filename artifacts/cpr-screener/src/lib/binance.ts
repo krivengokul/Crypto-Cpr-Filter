@@ -33,6 +33,11 @@ async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function getTodayUTCMidnightMs(): number {
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+}
+
 export async function fetchTopUSDTSymbols(limit = 150): Promise<Ticker24h[]> {
   const res = await fetch(`${BASE}/ticker/24hr`);
   if (!res.ok) throw new Error(`Binance ticker error: ${res.status}`);
@@ -55,7 +60,7 @@ export async function fetchTopUSDTSymbols(limit = 150): Promise<Ticker24h[]> {
 async function fetchKlines(symbol: string): Promise<OHLC[] | null> {
   try {
     const res = await fetch(
-      `${BASE}/klines?symbol=${symbol}&interval=1d&limit=3`
+      `${BASE}/klines?symbol=${symbol}&interval=1d&limit=4`
     );
     if (!res.ok) return null;
     const data: KlineRaw[] = await res.json();
@@ -81,10 +86,17 @@ export async function runScreener(
         batch.map(async (t) => {
         const klines = await fetchKlines(t.symbol);
         if (!klines || klines.length < 2) return null;
-        const prevCandle = klines[0];
-        const todayCandle = klines[1];
+        // Always use the last 2 completed candles for CPR
+        const prevCandle = klines[klines.length - 3] ?? klines[0];
+        const todayCandle = klines[klines.length - 2];
+        // Today's 5:30 AM IST open = 00:00 UTC candle
+        const todayMidnightMs = getTodayUTCMidnightMs();
+        const todayLiveCandle = klines[klines.length - 1];
+        const isTodayCandle = todayLiveCandle.openTime === todayMidnightMs;
         const currentPrice = parseFloat(t.lastPrice);
-        const changeFromDayOpen = ((currentPrice - todayCandle.open) / todayCandle.open) * 100;
+        const changeFromDayOpen = isTodayCandle
+          ? ((currentPrice - todayLiveCandle.open) / todayLiveCandle.open) * 100
+          : parseFloat(t.priceChangePercent); // fallback to 24h if scanned before 5:30 AM IST
         return analyzeCPR(
           t.symbol,
           [prevCandle, todayCandle],
