@@ -83,11 +83,13 @@ export async function runScreener(
         if (!klines || klines.length < 2) return null;
         const prevCandle = klines[0];
         const todayCandle = klines[1];
+        const currentPrice = parseFloat(t.lastPrice);
+        const changeFromDayOpen = ((currentPrice - todayCandle.open) / todayCandle.open) * 100;
         return analyzeCPR(
           t.symbol,
           [prevCandle, todayCandle],
-          parseFloat(t.lastPrice),
-          parseFloat(t.priceChangePercent),
+          currentPrice,
+          changeFromDayOpen,  // ← % change from 5:30 AM IST (00:00 UTC daily open)
           parseFloat(t.quoteVolume)
         );
       })
