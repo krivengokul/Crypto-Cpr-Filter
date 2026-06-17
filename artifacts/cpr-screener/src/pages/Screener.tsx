@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { runScreener } from "@/lib/binance";
+import { runDeltaScreener } from "@/lib/delta";
 import { CPRResult } from "@/lib/cpr";
 import {
   shouldAutoScan,
@@ -61,9 +62,7 @@ function getVal(r: CPRResult, key: SortKey): number | string {
 }
 
 export default function Screener() {
-  const [status, setStatus] = useState<"idle" | "scanning" | "done" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<"idle" | "scanning" | "done" | "error">("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0, symbol: "" });
   const [allResults, setAllResults] = useState<CPRResult[]>([]);
   const [filtered, setFiltered] = useState<CPRResult[]>([]);
@@ -78,10 +77,19 @@ export default function Screener() {
   const [lastScanDate] = useState(() => getLastScanDate());
   const scanRef = useRef(false);
 
+  const [deltaStatus, setDeltaStatus] = useState<"idle" | "scanning" | "done" | "error">("idle");
+  const [deltaProgress, setDeltaProgress] = useState({ done: 0, total: 0, symbol: "" });
+  const [deltaAllResults, setDeltaAllResults] = useState<CPRResult[]>([]);
+  const [deltaFiltered, setDeltaFiltered] = useState<CPRResult[]>([]);
+  const [deltaError, setDeltaError] = useState("");
+  const [activeTab, setActiveTab] = useState<"binance" | "delta">("binance");
+  const deltaScanRef = useRef(false);
+
   const doScan = useCallback(async () => {
     if (scanRef.current) return;
     scanRef.current = true;
     setStatus("scanning");
+    setActiveTab("binance");
     setAllResults([]);
     setFiltered([]);
     setError("");
@@ -101,6 +109,31 @@ export default function Screener() {
       setStatus("error");
     } finally {
       scanRef.current = false;
+    }
+  }, []);
+
+  const doDeltaScan = useCallback(async () => {
+    if (deltaScanRef.current) return;
+    deltaScanRef.current = true;
+    setDeltaStatus("scanning");
+    setActiveTab("delta");
+    setDeltaAllResults([]);
+    setDeltaFiltered([]);
+    setDeltaError("");
+    setDeltaProgress({ done: 0, total: 0, symbol: "" });
+
+    try {
+      const results = await runDeltaScreener((done, total, symbol) => {
+        setDeltaProgress({ done, total, symbol });
+      });
+      setDeltaAllResults(results);
+      setDeltaFiltered(results.filter((r) => r.passes));
+      setDeltaStatus("done");
+    } catch (e) {
+      setDeltaError(e instanceof Error ? e.message : "Unknown error");
+      setDeltaStatus("error");
+    } finally {
+      deltaScanRef.current = false;
     }
   }, []);
 
@@ -126,7 +159,18 @@ export default function Screener() {
     }
   };
 
-  const displayed = (showAll ? allResults : filtered)
+  const activeProgress = activeTab === "delta" ? deltaProgress : progress;
+  const progressPct =
+    activeProgress.total > 0
+      ? Math.round((activeProgress.done / activeProgress.total) * 100)
+      : 0;
+
+  const activeResults =
+    activeTab === "binance"
+      ? showAll ? allResults : filtered
+      : showAll ? deltaAllResults : deltaFiltered;
+
+  const displayed = activeResults
     .filter((r) => r.symbol.toLowerCase().includes(search.toLowerCase()))
     .slice()
     .sort((a, b) => {
@@ -135,11 +179,15 @@ export default function Screener() {
       if (typeof av === "string" && typeof bv === "string") {
         return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
       }
-      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
+      return sortDir === "asc"
+        ? (av as number) - (bv as number)
+        : (bv as number) - (av as number);
     });
 
-  const progressPct =
-    progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
+  const currentStatus = activeTab === "binance" ? status : deltaStatus;
+  const currentAllResults = activeTab === "binance" ? allResults : deltaAllResults;
+  const currentFiltered = activeTab === "binance" ? filtered : deltaFiltered;
+  const currentError = activeTab === "binance" ? error : deltaError;
 
   const SortIcon = ({ k }: { k: SortKey }) =>
     sortKey === k ? (
@@ -212,6 +260,30 @@ export default function Screener() {
           ))}
         </div>
 
+        {/* Source Tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab("binance")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold border transition-colors ${
+              activeTab === "binance"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-muted-foreground border-border hover:text-foreground"
+            }`}
+          >
+            Binance
+          </button>
+          <button
+            onClick={() => setActiveTab("delta")}
+            className={`px-4 py-1.5 rounded-lg text-sm font-semibold border transition-colors ${
+              activeTab === "delta"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-muted-foreground border-border hover:text-foreground"
+            }`}
+          >
+            Delta Exchange
+          </button>
+        </div>
+
         {/* Scheduler Status Bar */}
         <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-lg border border-border bg-card">
           {alreadyScannedToday && status !== "scanning" ? (
@@ -231,9 +303,7 @@ export default function Screener() {
               <Clock className="w-4 h-4" />
               <span>
                 Daily scan scheduled at{" "}
-                <span className="text-foreground font-medium">
-                  5:31 AM IST
-                </span>
+                <span className="text-foreground font-medium">5:31 AM IST</span>
               </span>
             </div>
           )}
@@ -266,20 +336,40 @@ export default function Screener() {
             {status === "scanning"
               ? "Scanning…"
               : status === "done"
-              ? "Re-scan Now"
-              : "Scan Now"}
+              ? "Re-scan Binance"
+              : "Binance Scan"}
           </button>
+
+          <button
+            onClick={doDeltaScan}
+            disabled={deltaStatus === "scanning"}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-secondary text-secondary-foreground border border-border font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {deltaStatus === "scanning" ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Zap className="w-4 h-4" />
+            )}
+            {deltaStatus === "scanning"
+              ? "Scanning Delta…"
+              : deltaStatus === "done"
+              ? "Re-scan Delta"
+              : "Delta Exchange Scan"}
+          </button>
+
           <span className="text-xs text-muted-foreground">
             Manual scan overrides the daily schedule
           </span>
 
-          {status === "done" && (
+          {currentStatus === "done" && (
             <div className="flex items-center gap-3 ml-auto">
               <span className="text-sm text-muted-foreground">
-                <span className="text-accent font-bold">{filtered.length}</span>{" "}
+                <span className="text-accent font-bold">
+                  {currentFiltered.length}
+                </span>{" "}
                 matches out of{" "}
                 <span className="text-foreground font-medium">
-                  {allResults.length}
+                  {currentAllResults.length}
                 </span>{" "}
                 scanned
               </span>
@@ -294,17 +384,17 @@ export default function Screener() {
         </div>
 
         {/* Progress Bar */}
-        {status === "scanning" && (
+        {(status === "scanning" || deltaStatus === "scanning") && (
           <div className="mb-6 rounded-lg border border-border bg-card p-4">
             <div className="flex justify-between text-xs text-muted-foreground mb-2">
               <span>
                 Scanning{" "}
                 <span className="font-mono text-foreground">
-                  {progress.symbol}
+                  {activeProgress.symbol}
                 </span>
               </span>
               <span>
-                {progress.done}/{progress.total} ({progressPct}%)
+                {activeProgress.done}/{activeProgress.total} ({progressPct}%)
               </span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -317,14 +407,14 @@ export default function Screener() {
         )}
 
         {/* Error */}
-        {status === "error" && (
+        {currentStatus === "error" && (
           <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive text-sm">
-            Error: {error}. Please try again.
+            Error: {currentError}. Please try again.
           </div>
         )}
 
         {/* Results Table */}
-        {status === "done" && displayed.length > 0 && (
+        {currentStatus === "done" && displayed.length > 0 && (
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -388,9 +478,9 @@ export default function Screener() {
                             {r.passes && (
                               <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                             )}
-                            {r.symbol.replace("USDT", "")}
+                            {r.symbol.replace("USDT", "").replace("USD", "")}
                             <span className="text-muted-foreground text-xs font-normal">
-                              /USDT
+                              /{activeTab === "delta" ? "USD" : "USDT"}
                             </span>
                           </div>
                         </td>
@@ -471,7 +561,11 @@ export default function Screener() {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <a
-                            href={`https://www.tradingview.com/chart/?symbol=BINANCE:${r.symbol}`}
+                            href={
+                              activeTab === "delta"
+                                ? `https://www.delta.exchange/app/futures/trade/${r.symbol}`
+                                : `https://www.tradingview.com/chart/?symbol=BINANCE:${r.symbol}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-muted-foreground hover:text-primary transition-colors"
@@ -488,7 +582,7 @@ export default function Screener() {
           </div>
         )}
 
-        {status === "done" && displayed.length === 0 && (
+        {currentStatus === "done" && displayed.length === 0 && (
           <div className="rounded-xl border border-border bg-card p-12 text-center">
             <TrendingUp className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
             <div className="text-muted-foreground text-sm">
@@ -499,7 +593,7 @@ export default function Screener() {
 
         {/* Footer */}
         <div className="mt-8 text-xs text-muted-foreground text-center">
-          Data from Binance Public API · Scans top 200 USDT pairs by volume · CPR from completed daily candles
+          Binance: top 500 USDT pairs · Delta Exchange: 195 perpetual futures · CPR from completed daily candles
           <br />
           Auto-scans once daily at 5:31 AM IST · Not financial advice · by Kriven Gokul
         </div>
