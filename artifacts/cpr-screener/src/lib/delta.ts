@@ -3,7 +3,7 @@ import { OHLC, CPRResult, analyzeCPR } from "./cpr";
 const BASE = "https://api.india.delta.exchange/v2";
 
 // ─── localStorage key prefixes (mirror Binance pattern) ──────────────────────
-const DELTA_RESULTS_KEY_PREFIX     = "delta_cpr_results_";
+const DELTA_RESULTS_KEY_PREFIX      = "delta_cpr_results_";
 const DELTA_SESSION_OPEN_KEY_PREFIX = "delta_session_open_";
 
 interface DeltaTicker {
@@ -63,15 +63,12 @@ function getPinnedResults(): CPRResult[] | null {
 function setPinnedResults(results: CPRResult[]): void {
   const key = DELTA_RESULTS_KEY_PREFIX + getTodayISTDate();
   localStorage.setItem(key, JSON.stringify(results));
-  // Clean up previous days
   Object.keys(localStorage)
     .filter((k) => k.startsWith(DELTA_RESULTS_KEY_PREFIX) && k !== key)
     .forEach((k) => localStorage.removeItem(k));
 }
 
-// ─── localStorage: session open prices (captured at first scan) ───────────────
-// We store the 5:30 AM IST candle open for each symbol so that on rescan
-// we can compute % change from session open accurately.
+// ─── localStorage: session open prices ───────────────────────────────────────
 
 function getPinnedSessionOpenMap(): SessionOpenMap | null {
   const key = DELTA_SESSION_OPEN_KEY_PREFIX + getTodayISTDate();
@@ -87,21 +84,43 @@ function setPinnedSessionOpenMap(map: SessionOpenMap): void {
     .forEach((k) => localStorage.removeItem(k));
 }
 
-// ─── API fetches ──────────────────────────────────────────────────────────────
+// ─── Fetch ALL perpetual futures tickers (handles pagination) ─────────────────
+// Delta Exchange /v2/tickers uses cursor-based pagination.
+// Each response has meta.after — pass it as ?after= to get the next page.
+// Without pagination the default page returns only ~24 results instead of 195.
 
 export async function fetchDeltaPerps(): Promise<DeltaTicker[]> {
-  const res = await fetch(`${BASE}/tickers`);
-  if (!res.ok) throw new Error(`Delta ticker error: ${res.status}`);
-  const data = await res.json();
-  return (data.result as DeltaTicker[])
-    .filter((t) => t.contract_type === "perpetual_futures")
-    .sort((a, b) => (b.turnover_usd || 0) - (a.turnover_usd || 0));
+  const all: DeltaTicker[] = [];
+  let after: string | null = null;
+
+  while (true) {
+    const url =
+      `${BASE}/tickers?contract_types=perpetual_futures` +
+      (after ? `&after=${encodeURIComponent(after)}` : "");
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Delta ticker error: ${res.status}`);
+    const data = await res.json();
+
+    const page: DeltaTicker[] = (data.result ?? []) as DeltaTicker[];
+    all.push(...page);
+
+    // If meta.after is present and non-null there is another page
+    const nextAfter: string | null = data.meta?.after ?? null;
+    if (!nextAfter || page.length === 0) break;
+    after = nextAfter;
+  }
+
+  // Sort by volume descending (same as before)
+  return all.sort((a, b) => (b.turnover_usd || 0) - (a.turnover_usd || 0));
 }
+
+// ─── Fetch daily candles for one symbol ──────────────────────────────────────
 
 async function fetchDeltaCandles(symbol: string): Promise<OHLC[] | null> {
   try {
     const now = Math.floor(Date.now() / 1000);
-    // 6 days ensures we always have enough completed candles
+    // 6 days guarantees enough completed candles regardless of IST session timing
     const start = now - 6 * 86400;
     const res = await fetch(
       `${BASE}/history/candles?symbol=${symbol}&resolution=1d&start=${start}&end=${now}`
@@ -144,8 +163,8 @@ function computeCPRForSymbol(
     todayLiveOpen = candles[todayLiveCandleIdx].open;
   } else {
     if (candles.length < 2) return null;
-    todayCandle   = candles[candles.length - 1];
-    prevCandle    = candles[candles.length - 2];
+    todayCandle = candles[candles.length - 1];
+    prevCandle  = candles[candles.length - 2];
   }
 
   const currentPrice = parseFloat(t.mark_price) || t.close;
@@ -174,7 +193,7 @@ export async function runDeltaScreener(
   const todaySessionStartMs = getTodayISTSessionStartMs();
 
   // Always fetch live tickers (needed for current price on every scan)
-  const tickers    = await fetchDeltaPerps();
+  const tickers = await fetchDeltaPerps();
   const tickerMap: Record<string, DeltaTicker> = {};
   for (const t of tickers) tickerMap[t.symbol] = t;
 
@@ -183,37 +202,31 @@ export async function runDeltaScreener(
   const pinnedSessionMap = getPinnedSessionOpenMap();
 
   if (pinnedResults && pinnedResults.length > 0 && pinnedSessionMap) {
-    // ── RESCAN PATH ──────────────────────────────────────────────────────────
-    // Reuse pinned CPR levels (pivot, bc, tc, cprRising, cprNarrowing, passes).
-    // Only update currentPrice and change24h from live ticker data.
-    // This guarantees the SAME coins always show on rescan — no candle API needed.
+    // ── RESCAN PATH: reuse pinned CPR levels, update live price only ──────────
     const total = pinnedResults.length;
-
     const updated: CPRResult[] = pinnedResults.map((saved, i) => {
       const live = tickerMap[saved.symbol];
       onProgress(i + 1, total, saved.symbol);
-      if (!live) return saved; // symbol delisted mid-day, keep as-is
+      if (!live) return saved;
 
-      const currentPrice  = parseFloat(live.mark_price) || live.close;
-      const sessionOpen   = pinnedSessionMap[saved.symbol] ?? null;
+      const currentPrice = parseFloat(live.mark_price) || live.close;
+      const sessionOpen  = pinnedSessionMap[saved.symbol] ?? null;
       const changeFromDayOpen =
         sessionOpen !== null && sessionOpen > 0
           ? ((currentPrice - sessionOpen) / sessionOpen) * 100
           : parseFloat(live.ltp_change_24h);
 
       return {
-        ...saved,        // ALL CPR levels, passes, cprRising, cprNarrowing FIXED ✅
-        currentPrice,    // live price updated ✅
-        change24h: changeFromDayOpen, // live % from 5:30 AM IST updated ✅
+        ...saved,
+        currentPrice,
+        change24h: changeFromDayOpen,
       } as CPRResult;
     });
-
     return updated;
   }
 
-  // ── FIRST SCAN PATH ────────────────────────────────────────────────────────
-  // Fetch candles for all symbols, compute CPR, pin to localStorage.
-  const results: CPRResult[]    = [];
+  // ── FIRST SCAN PATH: fetch candles for all symbols, compute + pin CPR ──────
+  const results: CPRResult[]       = [];
   const sessionOpenMap: SessionOpenMap = {};
   const batchSize = 10;
   const delayMs   = 300;
@@ -246,7 +259,7 @@ export async function runDeltaScreener(
     if (i + batchSize < tickers.length) await sleep(delayMs);
   }
 
-  // Pin both CPR results and session open prices for the rest of the day
+  // Pin for the rest of the day
   setPinnedResults(results);
   setPinnedSessionOpenMap(sessionOpenMap);
 
