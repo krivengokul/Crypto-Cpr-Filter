@@ -67,7 +67,6 @@ function getVal(r: CPRResult, key: SortKey): number | string {
 }
 
 function getChartUrl(symbol: string, source: "binance" | "delta"): string {
-  // For Delta symbols (USD suffix), convert to USDT for TradingView
   const tvSymbol =
     source === "delta" && symbol.endsWith("USD") && !symbol.endsWith("USDT")
       ? symbol.slice(0, -3) + "USDT"
@@ -133,30 +132,28 @@ export default function Screener() {
   }, []);
 
   const doDeltaScan = useCallback(async () => {
-      if (deltaScanRef.current) return;
-      deltaScanRef.current = true;
-      setDeltaStatus("scanning");
-      setActiveTab("delta");
-      setDeltaAllResults([]);
-      setDeltaFiltered([]);
-      setDeltaError("");
-      setDeltaProgress({ done: 0, total: 0, symbol: "" });
-      try {
-        // No forceRefresh parameter needed — runDeltaScreener always does a full
-        // candle fetch now, exactly the same as runScreener (Binance)
-        const results = await runDeltaScreener((done, total, symbol) => {
-          setDeltaProgress({ done, total, symbol });
-        });
-        setDeltaAllResults(results);
-        setDeltaFiltered(results.filter((r) => r.passes));
-        setDeltaStatus("done");
-      } catch (e) {
-        setDeltaError(e instanceof Error ? e.message : "Unknown error");
-        setDeltaStatus("error");
-      } finally {
-        deltaScanRef.current = false;
-      }
-    }, []); // safe: no state deps needed, deltaScanRef is a ref
+    if (deltaScanRef.current) return;
+    deltaScanRef.current = true;
+    setDeltaStatus("scanning");
+    setActiveTab("delta");
+    setDeltaAllResults([]);
+    setDeltaFiltered([]);
+    setDeltaError("");
+    setDeltaProgress({ done: 0, total: 0, symbol: "" });
+    try {
+      const results = await runDeltaScreener((done, total, symbol) => {
+        setDeltaProgress({ done, total, symbol });
+      });
+      setDeltaAllResults(results);
+      setDeltaFiltered(results.filter((r) => r.passes));
+      setDeltaStatus("done");
+    } catch (e) {
+      setDeltaError(e instanceof Error ? e.message : "Unknown error");
+      setDeltaStatus("error");
+    } finally {
+      deltaScanRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     if (shouldAutoScan()) {
@@ -186,13 +183,11 @@ export default function Screener() {
       ? Math.round((activeProgress.done / activeProgress.total) * 100)
       : 0;
 
-  // Build combined results (matches only for combined view)
   const combinedResults: CPRResultWithSource[] = [
     ...filtered.map((r) => ({ ...r, source: "binance" as const })),
     ...deltaFiltered.map((r) => ({ ...r, source: "delta" as const })),
   ];
 
-  // Combined all results (for show all)
   const combinedAllResults: CPRResultWithSource[] = [
     ...allResults.map((r) => ({ ...r, source: "binance" as const })),
     ...deltaAllResults.map((r) => ({ ...r, source: "delta" as const })),
