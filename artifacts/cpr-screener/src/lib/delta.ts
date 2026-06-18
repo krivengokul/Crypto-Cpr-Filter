@@ -42,9 +42,7 @@ function getTodayISTSessionStartMs(): number {
   return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 }
 
-// ─── Only cache the session open map (day-open prices) ───────────────────────
-// CPR results are NO LONGER cached — every scan re-fetches candles fresh,
-// exactly like Binance does.
+// ─── Session open cache (day-open price — stable all day) ─────────────────────
 
 function getPinnedSessionOpenMap(): SessionOpenMap | null {
   const key = DELTA_SESSION_OPEN_KEY_PREFIX + getTodayISTDate();
@@ -86,7 +84,13 @@ export async function fetchDeltaPerps(): Promise<DeltaTicker[]> {
   return all.sort((a, b) => (b.turnover_usd || 0) - (a.turnover_usd || 0));
 }
 
-// ─── Fetch daily candles — always fresh, no browser cache ────────────────────
+// ─── Fetch daily candles ──────────────────────────────────────────────────────
+// Handles two known Delta API response shapes:
+//   Shape A (v2 docs):   { result: [...candles] }
+//   Shape B (some envs): { result: { candles: [...] } }  ← nested object
+// Logs the raw response for the first symbol so you can inspect in DevTools.
+
+let _candleDebugLogged = false;
 
 async function fetchDeltaCandles(symbol: string): Promise<OHLC[] | null> {
   try {
@@ -98,87 +102,65 @@ async function fetchDeltaCandles(symbol: string): Promise<OHLC[] | null> {
     );
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data.result || data.result.length < 3) return null;
-    return (data.result as DeltaCandle[]).map((k) => ({
-      openTime: k.time * 1000,
-      open: k.open,
-      high: k.high,
-      low: k.low,
-      close: k.close,
-      volume: k.volume,
+
+    // ── Debug: log the raw response shape once so you can inspect it ────────
+    if (!_candleDebugLogged) {
+      _candleDebugLogged = true;
+      console.log(`[Delta candles DEBUG] symbol=${symbol} raw response:`, JSON.stringify(data).slice(0, 500));
+    }
+
+    // ── Flexibly extract the candles array ───────────────────────────────────
+    // Try all known shapes before giving up
+    let raw: DeltaCandle[] | null = null;
+
+    if (Array.isArray(data.result)) {
+      // Shape A: { result: [ {time,open,...}, ... ] }
+      raw = data.result as DeltaCandle[];
+    } else if (data.result && Array.isArray(data.result.candles)) {
+      // Shape B: { result: { candles: [...] } }
+      raw = data.result.candles as DeltaCandle[];
+    } else if (Array.isArray(data.candles)) {
+      // Shape C: { candles: [...] }
+      raw = data.candles as DeltaCandle[];
+    } else if (Array.isArray(data)) {
+      // Shape D: raw array at top level
+      raw = data as DeltaCandle[];
+    }
+
+    if (!raw || raw.length < 3) return null;
+
+    // ── Map to OHLC ──────────────────────────────────────────────────────────
+    // Delta candle time field may be seconds (Unix) or ms — normalise to ms
+    return raw.map((k) => ({
+      openTime: k.time > 1e10 ? k.time : k.time * 1000, // seconds → ms if needed
+      open:   Number(k.open),
+      high:   Number(k.high),
+      low:    Number(k.low),
+      close:  Number(k.close),
+      volume: Number(k.volume),
     }));
   } catch {
     return null;
   }
 }
 
-// ─── CPR computation for a single symbol ─────────────────────────────────────
-
-function computeCPRForSymbol(
-  t: DeltaTicker,
-  candles: OHLC[],
-  todaySessionStartMs: number,
-  savedSessionOpen: number | null
-): { result: CPRResult; sessionOpen: number | null } | null {
-  const todayLiveCandleIdx = candles.findIndex(
-    (c) => c.openTime === todaySessionStartMs
-  );
-
-  let todayCandle: OHLC;
-  let prevCandle: OHLC;
-  let todayLiveOpen: number | null = null;
-
-  if (todayLiveCandleIdx !== -1) {
-    if (todayLiveCandleIdx < 2) return null;
-    todayCandle   = candles[todayLiveCandleIdx - 1];
-    prevCandle    = candles[todayLiveCandleIdx - 2];
-    todayLiveOpen = candles[todayLiveCandleIdx].open;
-  } else {
-    if (candles.length < 2) return null;
-    todayCandle = candles[candles.length - 1];
-    prevCandle  = candles[candles.length - 2];
-    // Fall back to saved session open if live candle not in response
-    todayLiveOpen = savedSessionOpen;
-  }
-
-  const currentPrice = parseFloat(t.mark_price) || t.close;
-  const changeFromDayOpen =
-    todayLiveOpen !== null && todayLiveOpen > 0
-      ? ((currentPrice - todayLiveOpen) / todayLiveOpen) * 100
-      : parseFloat(t.ltp_change_24h);
-
-  const result = analyzeCPR(
-    t.symbol,
-    [prevCandle, todayCandle],
-    currentPrice,
-    changeFromDayOpen,
-    t.turnover_usd || 0
-  );
-
-  if (!result) return null;
-  return { result, sessionOpen: todayLiveOpen };
-}
-
 // ─── Main screener ────────────────────────────────────────────────────────────
-// Now works exactly like Binance:
-//   • Every call re-fetches all tickers (live prices)
-//   • Every call re-fetches all candles (fresh CPR computation)
-//   • No CPR results cached in localStorage
-//   • Only the sessionOpenMap is cached (day-open price, stable all day)
 
 export async function runDeltaScreener(
   onProgress: (done: number, total: number, symbol: string) => void
 ): Promise<CPRResult[]> {
   const todaySessionStartMs = getTodayISTSessionStartMs();
 
-  // Always fetch live tickers
+  // Reset debug flag so each scan logs fresh
+  _candleDebugLogged = false;
+
   const tickers = await fetchDeltaPerps();
 
-  // Load saved session open prices (these don't change during the day)
   const savedSessionMap = getPinnedSessionOpenMap() ?? {};
-
-  const results: CPRResult[]           = [];
   const sessionOpenMap: SessionOpenMap = { ...savedSessionMap };
+
+  const results: CPRResult[] = [];
+  let nullCount = 0; // track how many symbols fail candle fetch
   const batchSize = 10;
   const delayMs   = 300;
 
@@ -187,21 +169,56 @@ export async function runDeltaScreener(
 
     const batchResults = await Promise.all(
       batch.map(async (t) => {
-        // Always fetch fresh candles — no cache, same as Binance klines fetch
         const candles = await fetchDeltaCandles(t.symbol);
-        if (!candles || candles.length < 3) return null;
-        const savedOpen = savedSessionMap[t.symbol] ?? null;
-        return computeCPRForSymbol(t, candles, todaySessionStartMs, savedOpen);
+        if (!candles || candles.length < 3) {
+          nullCount++;
+          return null;
+        }
+
+        // ── Select the two completed candles for CPR ─────────────────────────
+        const todayLiveCandleIdx = candles.findIndex(
+          (c) => c.openTime === todaySessionStartMs
+        );
+
+        let prevCandle: OHLC;
+        let todayCandle: OHLC;
+        let todayLiveOpen: number | null = null;
+
+        if (todayLiveCandleIdx !== -1) {
+          // Live incomplete candle is in the array — pick the two before it
+          if (todayLiveCandleIdx < 2) return null;
+          prevCandle    = candles[todayLiveCandleIdx - 2];
+          todayCandle   = candles[todayLiveCandleIdx - 1];
+          todayLiveOpen = candles[todayLiveCandleIdx].open;
+        } else {
+          // No live candle — last two completed candles
+          prevCandle  = candles[candles.length - 3] ?? candles[0];
+          todayCandle = candles[candles.length - 2];
+          todayLiveOpen = savedSessionMap[t.symbol] ?? null;
+        }
+
+        if (todayLiveOpen !== null) {
+          sessionOpenMap[t.symbol] = todayLiveOpen;
+        }
+
+        const currentPrice = parseFloat(t.mark_price) || t.close;
+        const changeFromDayOpen =
+          todayLiveOpen !== null && todayLiveOpen > 0
+            ? ((currentPrice - todayLiveOpen) / todayLiveOpen) * 100
+            : parseFloat(t.ltp_change_24h);
+
+        // Pass [prevCandle, todayCandle] — analyzeCPR uses [-2] and [-1]
+        return analyzeCPR(
+          t.symbol,
+          [prevCandle, todayCandle],
+          currentPrice,
+          changeFromDayOpen,
+          t.turnover_usd || 0
+        );
       })
     );
 
-    batchResults.forEach((r) => {
-      if (!r) return;
-      results.push(r.result);
-      if (r.sessionOpen !== null) {
-        sessionOpenMap[r.result.symbol] = r.sessionOpen;
-      }
-    });
+    batchResults.forEach((r) => { if (r) results.push(r); });
 
     onProgress(
       Math.min(i + batchSize, tickers.length),
@@ -212,8 +229,9 @@ export async function runDeltaScreener(
     if (i + batchSize < tickers.length) await sleep(delayMs);
   }
 
-  // Only persist session open prices (stable all day, saves re-deriving them)
-  setPinnedSessionOpenMap(sessionOpenMap);
+  // Log summary to help diagnose if still broken
+  console.log(`[Delta scan] total=${tickers.length} nullCandles=${nullCount} results=${results.length} matches=${results.filter(r=>r.passes).length}`);
 
+  setPinnedSessionOpenMap(sessionOpenMap);
   return results;
 }
