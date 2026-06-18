@@ -146,7 +146,10 @@ async function fetchDeltaCandles(symbol: string): Promise<OHLC[] | null> {
     }
 
     if (!raw || raw.length < 3) return null;
-
+    
+    // Delta returns candles newest-first — sort ascending so index 0 = oldest
+    raw.sort((a, b) => a.time - b.time);
+    
     return raw.map((k) => ({
       openTime: k.time > 1e10 ? k.time : k.time * 1000,
       open: Number(k.open),
