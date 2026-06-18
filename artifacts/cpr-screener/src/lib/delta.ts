@@ -68,6 +68,12 @@ function setPinnedResults(results: CPRResult[]): void {
     .forEach((k) => localStorage.removeItem(k));
 }
 
+// ── NEW: clear today's pinned CPR results from localStorage ──────────────────
+function clearPinnedResults(): void {
+  const key = DELTA_RESULTS_KEY_PREFIX + getTodayISTDate();
+  localStorage.removeItem(key);
+}
+
 // ─── localStorage: session open prices ───────────────────────────────────────
 
 function getPinnedSessionOpenMap(): SessionOpenMap | null {
@@ -84,10 +90,13 @@ function setPinnedSessionOpenMap(map: SessionOpenMap): void {
     .forEach((k) => localStorage.removeItem(k));
 }
 
+// ── NEW: clear today's pinned session open map from localStorage ──────────────
+function clearPinnedSessionOpenMap(): void {
+  const key = DELTA_SESSION_OPEN_KEY_PREFIX + getTodayISTDate();
+  localStorage.removeItem(key);
+}
+
 // ─── Fetch ALL perpetual futures tickers (handles pagination) ─────────────────
-// Delta Exchange /v2/tickers uses cursor-based pagination.
-// Each response has meta.after — pass it as ?after= to get the next page.
-// Without pagination the default page returns only ~24 results instead of 195.
 
 export async function fetchDeltaPerps(): Promise<DeltaTicker[]> {
   const all: DeltaTicker[] = [];
@@ -105,13 +114,11 @@ export async function fetchDeltaPerps(): Promise<DeltaTicker[]> {
     const page: DeltaTicker[] = (data.result ?? []) as DeltaTicker[];
     all.push(...page);
 
-    // If meta.after is present and non-null there is another page
     const nextAfter: string | null = data.meta?.after ?? null;
     if (!nextAfter || page.length === 0) break;
     after = nextAfter;
   }
 
-  // Sort by volume descending (same as before)
   return all.sort((a, b) => (b.turnover_usd || 0) - (a.turnover_usd || 0));
 }
 
@@ -119,11 +126,12 @@ export async function fetchDeltaPerps(): Promise<DeltaTicker[]> {
 
 async function fetchDeltaCandles(symbol: string): Promise<OHLC[] | null> {
   try {
+    // ── FIX: add cache-busting timestamp so the browser never serves a
+    //    stale cached response for this URL ──────────────────────────────────
     const now = Math.floor(Date.now() / 1000);
-    // 6 days guarantees enough completed candles regardless of IST session timing
     const start = now - 6 * 86400;
     const res = await fetch(
-      `${BASE}/history/candles?symbol=${symbol}&resolution=1d&start=${start}&end=${now}`
+      `${BASE}/history/candles?symbol=${symbol}&resolution=1d&start=${start}&end=${now}&_t=${now}`
     );
     if (!res.ok) return null;
     const data = await res.json();
@@ -188,7 +196,8 @@ function computeCPRForSymbol(
 // ─── Main screener ────────────────────────────────────────────────────────────
 
 export async function runDeltaScreener(
-  onProgress: (done: number, total: number, symbol: string) => void
+  onProgress: (done: number, total: number, symbol: string) => void,
+  forceRefresh = false   // ── NEW parameter ──────────────────────────────────
 ): Promise<CPRResult[]> {
   const todaySessionStartMs = getTodayISTSessionStartMs();
 
@@ -196,6 +205,12 @@ export async function runDeltaScreener(
   const tickers = await fetchDeltaPerps();
   const tickerMap: Record<string, DeltaTicker> = {};
   for (const t of tickers) tickerMap[t.symbol] = t;
+
+  // ── FIX: if forceRefresh, wipe the pinned cache so we do a full rescan ────
+  if (forceRefresh) {
+    clearPinnedResults();
+    clearPinnedSessionOpenMap();
+  }
 
   // ── CHECK: do we already have today's pinned CPR results? ──────────────────
   const pinnedResults    = getPinnedResults();
@@ -225,8 +240,8 @@ export async function runDeltaScreener(
     return updated;
   }
 
-  // ── FIRST SCAN PATH: fetch candles for all symbols, compute + pin CPR ──────
-  const results: CPRResult[]       = [];
+  // ── FULL SCAN PATH: fetch candles for all symbols, compute + pin CPR ───────
+  const results: CPRResult[]           = [];
   const sessionOpenMap: SessionOpenMap = {};
   const batchSize = 10;
   const delayMs   = 300;
