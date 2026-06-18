@@ -132,37 +132,31 @@ export default function Screener() {
     }
   }, []);
 
-  // ─── CHANGE IN Screener.tsx ───────────────────────────────────────────────────
-  // Only this function changes. Replace the existing doDeltaScan with this:
-  
   const doDeltaScan = useCallback(async () => {
-    if (deltaScanRef.current) return;
-    deltaScanRef.current = true;
-  
-    // ── FIX: capture whether this is a rescan BEFORE resetting deltaStatus ──
-    const isRescan = deltaStatus === "done";
-  
-    setDeltaStatus("scanning");
-    setActiveTab("delta");
-    setDeltaAllResults([]);
-    setDeltaFiltered([]);
-    setDeltaError("");
-    setDeltaProgress({ done: 0, total: 0, symbol: "" });
-    try {
-      // ── FIX: pass forceRefresh=true when rescanning so cache is cleared ──
-      const results = await runDeltaScreener((done, total, symbol) => {
-        setDeltaProgress({ done, total, symbol });
-      }, isRescan);                          // <── only change on this line
-      setDeltaAllResults(results);
-      setDeltaFiltered(results.filter((r) => r.passes));
-      setDeltaStatus("done");
-    } catch (e) {
-      setDeltaError(e instanceof Error ? e.message : "Unknown error");
-      setDeltaStatus("error");
-    } finally {
-      deltaScanRef.current = false;
-    }
-  }, [deltaStatus]);                         // <── add deltaStatus to deps
+      if (deltaScanRef.current) return;
+      deltaScanRef.current = true;
+      setDeltaStatus("scanning");
+      setActiveTab("delta");
+      setDeltaAllResults([]);
+      setDeltaFiltered([]);
+      setDeltaError("");
+      setDeltaProgress({ done: 0, total: 0, symbol: "" });
+      try {
+        // No forceRefresh parameter needed — runDeltaScreener always does a full
+        // candle fetch now, exactly the same as runScreener (Binance)
+        const results = await runDeltaScreener((done, total, symbol) => {
+          setDeltaProgress({ done, total, symbol });
+        });
+        setDeltaAllResults(results);
+        setDeltaFiltered(results.filter((r) => r.passes));
+        setDeltaStatus("done");
+      } catch (e) {
+        setDeltaError(e instanceof Error ? e.message : "Unknown error");
+        setDeltaStatus("error");
+      } finally {
+        deltaScanRef.current = false;
+      }
+    }, []); // safe: no state deps needed, deltaScanRef is a ref
 
   useEffect(() => {
     if (shouldAutoScan()) {
