@@ -29,9 +29,7 @@ type SortKey =
   | "compressionRatio"
   | "change24h"
   | "DistfromCPR"
-  | "todayCPR.pivot"
-  | "prevCPR.widthPct"
-  | "todayCPR.widthPct";
+  | "todayCPR.pivot";
 
 type SortDir = "asc" | "desc";
 type ActiveTab = "binance" | "delta" | "combined";
@@ -607,9 +605,7 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                       {[
                         { key: "symbol" as SortKey, label: "Symbol" },
                         { key: "todayCPR.pivot" as SortKey, label: "Today Pivot" },
-                        { key: "prevCPR.widthPct" as SortKey, label: "PDay Width%" },
-                        { key: "todayCPR.widthPct" as SortKey, label: "Today Width%" },
-                        { key: "compressionRatio" as SortKey, label: "Compression%" },
+                        { key: "compressionRatio" as SortKey, label: "Width & Compression" },
                         { key: "change24h" as SortKey, label: "Change (5:30 AM IST)" },
                         { key: "DistfromCPR" as SortKey, label: "Dist from CPR" },
                       ].map((col) => (
@@ -676,37 +672,41 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                               BC: {fmt(r.todayCPR.bc)}
                             </div>
                           </td>
-                          <td  className="px-4 py-3 font-mono whitespace-nowrap">
-                            <span className="text-chart-3">
-                               {r.prevCPR.widthPct.toFixed(4)}%
-                            </span>
-                          </td>
                           <td className="px-4 py-3 font-mono whitespace-nowrap">
-                            <span className="text-chart-3">
+                            <div className="text-xs text-chart-3">
                               {r.todayCPR.widthPct.toFixed(4)}%
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
+                            </div>
                             <div
-                              className={`font-mono font-semibold ${
-                                r.compressionRatio < 50
+                              className={`text-xs font-semibold py-0.5 ${
+                                r.compressionRatio < 25
+                                  ? "text-green-400"
+                                  : r.compressionRatio < 50
                                   ? "text-accent"
-                                  : "text-muted-foreground"
+                                  : r.compressionRatio < 75
+                                  ? "text-yellow-500"
+                                  : "text-destructive"
                               }`}
                             >
                               {r.compressionRatio.toFixed(1)}%
+                              <div className="w-full bg-muted rounded-full h-1 mt-0.5 max-w-[64px]">
+                                <div
+                                  className={`h-1 rounded-full transition-all ${
+                                    r.compressionRatio < 25
+                                      ? "bg-green-400"
+                                      : r.compressionRatio < 50
+                                      ? "bg-accent"
+                                      : r.compressionRatio < 75
+                                      ? "bg-yellow-500"
+                                      : "bg-destructive"
+                                  }`}
+                                  style={{
+                                    width: `${Math.min(r.compressionRatio, 100)}%`,
+                                  }}
+                                />
+                              </div>
                             </div>
-                            <div className="w-full bg-muted rounded-full h-1 mt-1 max-w-[80px]">
-                              <div
-                                className={`h-1 rounded-full transition-all ${
-                                  r.compressionRatio < 50
-                                    ? "bg-accent"
-                                    : "bg-muted-foreground"
-                                }`}
-                                style={{
-                                  width: `${Math.min(r.compressionRatio, 100)}%`,
-                                }}
-                              />
+                            <div className="text-xs text-chart-3/70">
+                              {r.prevCPR.widthPct.toFixed(4)}%
                             </div>
                           </td>
                           <td
