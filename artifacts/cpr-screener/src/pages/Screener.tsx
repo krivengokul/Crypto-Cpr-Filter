@@ -88,7 +88,12 @@ function formatSymbol(symbol: string, source: "binance" | "delta"): { base: stri
   return { base: symbol.replace("USDT", ""), quote: "USDT" };
 }
 
-export default function Screener() {
+function passesPattern(r: CPRResult, pattern: string): boolean {
+  if (pattern === "falling") return !r.cprRising && r.cprNarrowing;
+  return r.cprRising && r.cprNarrowing; // "rising" default
+}
+
+export default function Screener({ activePattern = "rising" }: { activePattern?: string }) {
   const [status, setStatus] = useState<"idle" | "scanning" | "done" | "error">("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0, symbol: "" });
   const [allResults, setAllResults] = useState<CPRResult[]>([]);
@@ -126,7 +131,7 @@ export default function Screener() {
         setProgress({ done, total, symbol });
       });
       setAllResults(results);
-      setFiltered(results.filter((r) => r.passes));
+      setFiltered(results.filter((r) => passesPattern(r, activePattern)));
       setStatus("done");
       markScannedToday();
       setNextScanUtc(getNextScanIST());
@@ -152,7 +157,7 @@ export default function Screener() {
         setDeltaProgress({ done, total, symbol });
       });
       setDeltaAllResults(results);
-      setDeltaFiltered(results.filter((r) => r.passes));
+      setDeltaFiltered(results.filter((r) => passesPattern(r, activePattern)));
       setDeltaStatus("done");
     } catch (e) {
       setDeltaError(e instanceof Error ? e.message : "Unknown error");
@@ -174,6 +179,15 @@ export default function Screener() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [nextScanUtc]);
+
+  useEffect(() => {
+    if (allResults.length > 0) {
+      setFiltered(allResults.filter((r) => passesPattern(r, activePattern)));
+    }
+    if (deltaAllResults.length > 0) {
+      setDeltaFiltered(deltaAllResults.filter((r) => passesPattern(r, activePattern)));
+    }
+  }, [activePattern]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -287,16 +301,32 @@ export default function Screener() {
             </span>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
-            Filters crypto coins where{" "}
-            <span className="text-foreground font-medium">
-              today&apos;s CPR is above yesterday&apos;s CPR
-            </span>{" "}
-            and{" "}
-            <span className="text-foreground font-medium">
-              today&apos;s CPR width is less than 50% of yesterday&apos;s
-            </span>
-            . Signals a compressed pivot zone — a potential breakout setup.
-          </p>
+            {activePattern === "falling" ? (
+              <>
+                Filters crypto coins where{" "}
+                <span className="text-foreground font-medium">
+                  today&apos;s CPR is below yesterday&apos;s CPR
+                </span>{" "}
+                and{" "}
+                <span className="text-foreground font-medium">
+                  today&apos;s CPR width is less than 50% of yesterday&apos;s
+                </span>
+                . Signals a compressed bearish pivot zone — a potential breakdown setup.
+              </>
+            ) : (
+              <>
+                Filters crypto coins where{" "}
+                <span className="text-foreground font-medium">
+                  today&apos;s CPR is above yesterday&apos;s CPR
+                </span>{" "}
+                and{" "}
+                <span className="text-foreground font-medium">
+                  today&apos;s CPR width is less than 50% of yesterday&apos;s
+                </span>
+                . Signals a compressed pivot zone — a potential breakout setup.
+              </>
+            )}
+          </p>;
         </div>
 
         {/* CPR Legend */}
