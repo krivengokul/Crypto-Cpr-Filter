@@ -90,7 +90,9 @@ function formatSymbol(symbol: string, source: "binance" | "delta"): { base: stri
 
 function passesPattern(r: CPRResult, pattern: string): boolean {
   if (pattern === "falling") return !r.cprRising && r.cprNarrowing;
-  return r.cprRising && r.cprNarrowing; // "rising" default
+  if (pattern === "inside-value")
+    return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
+  return r.cprRising && r.cprNarrowing;
 }
 
 export default function Screener({ activePattern = "rising" }: { activePattern?: string }) {
@@ -313,6 +315,15 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                 </span>
                 . Signals a compressed bearish pivot zone — a potential breakdown setup.
               </>
+            ) : activePattern === "inside-value" ? (
+              <>
+                Filters crypto coins where{" "}
+                <span className="text-foreground font-medium">
+                  today&apos;s CPR is fully contained within yesterday&apos;s CPR
+                </span>{" "}
+                — compression setup with{" "}
+                <span className="text-foreground font-medium">breakout potential</span>.
+              </>
             ) : (
               <>
                 Filters crypto coins where{" "}
@@ -338,21 +349,33 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                 color: "text-primary",
               },
               activePattern === "falling"
-                ? {
-                    label: "CPR Falling",
-                    desc: "Today's Pivot < Yesterday's Pivot — bearish directional bias",
-                    color: "text-destructive",
-                  }
-                : {
-                    label: "CPR Rising",
-                    desc: "Today's Pivot > Yesterday's Pivot — bullish directional bias",
-                    color: "text-accent",
-                  },
-              {
-                label: "CPR Narrowing <50%",
-                desc: "Today's width < 50% of yesterday — compressed zone, energy building",
-                color: "text-chart-3",
-              },
+              ? {
+                  label: "CPR Falling",
+                  desc: "Today's Pivot < Yesterday's Pivot — bearish directional bias",
+                  color: "text-destructive",
+                }
+              : activePattern === "inside-value"
+              ? {
+                  label: "Inside Value CPR",
+                  desc: "Today's TC < Yesterday's TC and Today's BC > Yesterday's BC",
+                  color: "text-blue-400",
+                }
+              : {
+                  label: "CPR Rising",
+                  desc: "Today's Pivot > Yesterday's Pivot — bullish directional bias",
+                  color: "text-accent",
+                },
+              activePattern === "inside-value"
+              ? {
+                  label: "Full Containment",
+                  desc: "Today's CPR fully inside yesterday's — volatility compression, breakout potential",
+                  color: "text-chart-3",
+                }
+              : {
+                  label: "CPR Narrowing <50%",
+                  desc: "Today's width < 50% of yesterday — compressed zone, energy building",
+                  color: "text-chart-3",
+                },
             ].map((item) => (
             <div
               key={item.label}
@@ -689,6 +712,11 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                               {!r.cprRising && r.cprNarrowing && activePattern === "falling" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
                                   Falling
+                                </span>
+                              )}
+                              {passesPattern(r, "inside-value") && activePattern === "inside-value" && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
+                                  Inside
                                 </span>
                               )}
                               {r.cprNarrowing && (
