@@ -21,6 +21,7 @@ export interface CPRResult {
   prevCPR: CPRLevels;
   compressionRatio: number;
   cprRising: boolean;
+  cprFalling: boolean;
   cprNarrowing: boolean;
   passes: boolean;
   currentPrice: number;
@@ -54,7 +55,11 @@ export function analyzeCPR(
   const prevCPR = calcCPR(prevCandle);
   const todayCPR = calcCPR(todayCandle);
 
+  // Rising: today's entire CPR range is strictly above yesterday's (no overlap)
   const cprRising = todayCPR.bc > prevCPR.tc;
+  // Falling: today's entire CPR range is strictly below yesterday's (no overlap)
+  const cprFalling = todayCPR.tc < prevCPR.bc;
+
   const compressionRatio = prevCPR.width > 0 ? (todayCPR.width / prevCPR.width) * 100 : 100;
   const cprNarrowing = compressionRatio < 50;
 
@@ -64,6 +69,7 @@ export function analyzeCPR(
     prevCPR,
     compressionRatio,
     cprRising,
+    cprFalling,
     cprNarrowing,
     passes: cprRising && cprNarrowing,
     currentPrice,
