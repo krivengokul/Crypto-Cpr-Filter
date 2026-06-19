@@ -605,7 +605,7 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                       {[
                         { key: "symbol" as SortKey, label: "Symbol" },
                         { key: "todayCPR.pivot" as SortKey, label: "Today Pivot" },
-                        { key: "compressionRatio" as SortKey, label: "Width & Compression" },
+                        { key: "compressionRatio" as SortKey, label: "Pivot Width" },
                         { key: "change24h" as SortKey, label: "Change (5:30 AM IST)" },
                         { key: "DistfromCPR" as SortKey, label: "Dist from CPR" },
                       ].map((col) => (
@@ -674,7 +674,7 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                           </td>
                           <td className="px-4 py-3 font-mono whitespace-nowrap">
                             <div className="text-xs text-chart-3">
-                              {r.todayCPR.widthPct.toFixed(4)}%
+                              <span className="text-muted-foreground">TDay: </span>{r.todayCPR.widthPct.toFixed(4)}%
                             </div>
                             <div
                               className={`text-xs font-semibold py-0.5 ${
@@ -706,7 +706,7 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                               </div>
                             </div>
                             <div className="text-xs text-chart-3/70">
-                              {r.prevCPR.widthPct.toFixed(4)}%
+                              <span className="text-muted-foreground">PDay: </span>{r.prevCPR.widthPct.toFixed(4)}%
                             </div>
                           </td>
                           <td
