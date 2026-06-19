@@ -7,6 +7,16 @@ import PatternSidebar, { patterns } from "@/components/ui/PatternSidebar";
 
 const queryClient = new QueryClient();
 
+const SIDEBAR_KEY = "cpr-sidebar-collapsed";
+
+function getSavedCollapsed(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 function ComingSoon({ label }: { label: string }) {
   return (
     <div className="flex-1 flex items-center justify-center h-full min-h-screen">
@@ -20,7 +30,19 @@ function ComingSoon({ label }: { label: string }) {
 
 function App() {
   const [activePattern, setActivePattern] = useState("rising");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(getSavedCollapsed);
+
+  const handleToggle = () => {
+    setSidebarCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(SIDEBAR_KEY, String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   const activeLabel =
     patterns.find((p) => p.id === activePattern)?.label ?? activePattern;
@@ -33,7 +55,7 @@ function App() {
             activePattern={activePattern}
             onSelect={setActivePattern}
             collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed((v) => !v)}
+            onToggle={handleToggle}
           />
           <main className="flex-1 overflow-auto">
             {activePattern === "rising" ? (
