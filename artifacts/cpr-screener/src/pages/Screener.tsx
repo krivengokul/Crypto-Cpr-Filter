@@ -326,7 +326,7 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                 . Signals a compressed pivot zone — a potential breakout setup.
               </>
             )}
-          </p>;
+          </p>
         </div>
 
         {/* CPR Legend */}
