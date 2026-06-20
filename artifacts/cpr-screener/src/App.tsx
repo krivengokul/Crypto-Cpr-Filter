@@ -73,7 +73,7 @@ function App() {
               <Menu className="w-5 h-5" />
             </button>
 
-            {["rising", "falling", "inside-value", "structure-bullish"].includes(activePattern) ? (
+            {["rising", "falling", "inside-value", "structure-bullish", "lower-bullish"].includes(activePattern) ? (
               <Screener activePattern={activePattern} />
             ) : (
               <ComingSoon label={activeLabel} />
