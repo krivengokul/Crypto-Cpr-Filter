@@ -13,11 +13,15 @@ export interface CPRLevels {
   tc: number;
   width: number;
   widthPct: number;
-  // ADK Classic Pivot Support & Resistance levels
+  // ADK: Previous Day High/Low shown as additional S/R levels
+  prevHigh: number;
+  prevLow: number;
+  // ADK Classic Pivot Resistance levels
   r1: number;
   r2: number;
   r3: number;
   r4: number;
+  // ADK Classic Pivot Support levels
   s1: number;
   s2: number;
   s3: number;
@@ -51,16 +55,39 @@ function isValidCandle(c: OHLC): boolean {
   );
 }
 
+/**
+ * ADK Classic Pivot CPR calculation.
+ *
+ * Matches "CPR by Ask Dinesh Kumar (ADK)" TradingView indicator exactly:
+ *   Pivot  = (H + L + C) / 3
+ *   BC     = (H + L) / 2          — always the lower CPR boundary
+ *   TC     = 2 × Pivot − BC       — always the upper CPR boundary
+ *
+ * Resistance (R1–R4):
+ *   R1 = 2P − L
+ *   R2 = P  + (H − L)
+ *   R3 = H  + 2 × (P − L)
+ *   R4 = H  + 3 × (P − L)
+ *
+ * Support (S1–S4):
+ *   S1 = 2P − H
+ *   S2 = P  − (H − L)
+ *   S3 = L  − 2 × (H − P)
+ *   S4 = L  − 3 × (H − P)
+ *
+ * prevHigh / prevLow are stored so the S/R ladder can display them
+ * exactly as ADK shows "PH" and "PL" lines on the chart.
+ */
 export function calcCPR(candle: OHLC): CPRLevels {
   const h = candle.high;
   const l = candle.low;
   const c = candle.close;
 
   const pivot    = (h + l + c) / 3;
-  const midpoint = (h + l) / 2;          // one CPR boundary
-  const other    = 2 * pivot - midpoint; // other CPR boundary
-  const bc       = Math.min(midpoint, other); // always the lower boundary
-  const tc       = Math.max(midpoint, other); // always the upper boundary
+  const midpoint = (h + l) / 2;
+  const other    = 2 * pivot - midpoint;
+  const bc       = Math.min(midpoint, other);
+  const tc       = Math.max(midpoint, other);
   const width    = tc - bc;
   const widthPct = (width / pivot) * 100;
   const range    = h - l;
@@ -71,12 +98,12 @@ export function calcCPR(candle: OHLC): CPRLevels {
     tc,
     width,
     widthPct,
-    // ADK Classic Pivot Resistance (R1–R4)
+    prevHigh: h,
+    prevLow:  l,
     r1: 2 * pivot - l,
     r2: pivot + range,
     r3: h + 2 * (pivot - l),
     r4: h + 3 * (pivot - l),
-    // ADK Classic Pivot Support (S1–S4)
     s1: 2 * pivot - h,
     s2: pivot - range,
     s3: l - 2 * (h - pivot),
@@ -96,13 +123,11 @@ export function analyzeCPR(
   const prevCandle  = candles[candles.length - 2];
   const todayCandle = candles[candles.length - 1];
 
-  // Reject candles with missing/zero/corrupt data
   if (!isValidCandle(prevCandle) || !isValidCandle(todayCandle)) return null;
 
   const prevCPR  = calcCPR(prevCandle);
   const todayCPR = calcCPR(todayCandle);
 
-  // Require a minimum gap of 0.1% of pivot — filters out near-touching CPRs (noise)
   const minGap     = prevCPR.pivot * 0.001;
   const cprRising  = (todayCPR.bc - prevCPR.tc) >= minGap;
   const cprFalling = (prevCPR.bc  - todayCPR.tc) >= minGap;
