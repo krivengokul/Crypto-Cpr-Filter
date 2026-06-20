@@ -72,7 +72,11 @@ function getChartUrl(symbol: string, source: "binance" | "delta"): string {
   if (source === "binance") {
     return `https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}`;
   }
-  return `https://www.tradingview.com/chart/?symbol=DELTA:${symbol}`;
+  const tvSymbol =
+    source === "delta" && symbol.endsWith("USD") && !symbol.endsWith("USDT")
+      ? symbol.slice(0, -3) + "USDT"
+      : symbol;
+  return `https://www.tradingview.com/chart/?symbol=BINANCE:${tvSymbol}`;
 }
 
 function passesPattern(r: CPRResult, pattern: string): boolean {
