@@ -314,14 +314,16 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
             const tickers: Array<{
               symbol: string;
               lastPrice: string;
-              priceChangePercent: string;
+              openPrice: string;
             }> = await res.json();
-            tickers.forEach((t) =>
+            tickers.forEach((t) => {
+              const price = parseFloat(t.lastPrice);
+              const open  = parseFloat(t.openPrice);
               priceMap.set(t.symbol, {
-                price: parseFloat(t.lastPrice),
-                change: parseFloat(t.priceChangePercent),
-              })
-            );
+                price,
+                change: open > 0 ? ((price - open) / open) * 100 : 0,
+              });
+            });
           })
         );
 
