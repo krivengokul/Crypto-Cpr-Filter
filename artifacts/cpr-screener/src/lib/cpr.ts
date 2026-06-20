@@ -25,6 +25,7 @@ export interface CPRResult {
   cprNarrowing: boolean;
   passes: boolean;
   currentPrice: number;
+  openPrice: number;
   change24h: number;
   quoteVolume: number;
 }
@@ -88,6 +89,7 @@ export function analyzeCPR(
     cprNarrowing,
     passes: cprRising && cprNarrowing,
     currentPrice,
+    openPrice: todayCandle.open,
     change24h,
     quoteVolume,
   };
