@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Screener from "@/pages/Screener";
 import PatternSidebar, { patterns } from "@/components/ui/PatternSidebar";
+import { Menu } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function ComingSoon({ label }: { label: string }) {
 function App() {
   const [activePattern, setActivePattern] = useState("rising");
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(getSavedCollapsed);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleToggle = () => {
     setSidebarCollapsed((v) => {
@@ -56,8 +58,21 @@ function App() {
             onSelect={setActivePattern}
             collapsed={sidebarCollapsed}
             onToggle={handleToggle}
+            mobileOpen={mobileOpen}
+            onMobileClose={() => setMobileOpen(false)}
           />
-          <main className="flex-1 overflow-auto">
+
+          <main className="flex-1 overflow-auto min-w-0">
+            {/* Hamburger — only visible on mobile */}
+            <button
+              className="md:hidden fixed top-3 left-3 z-30 flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+              style={{ background: "#161b22", border: "1px solid #1e2d3d", color: "#8ba3bc" }}
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
             {["rising", "falling", "inside-value"].includes(activePattern) ? (
               <Screener activePattern={activePattern} />
             ) : (
