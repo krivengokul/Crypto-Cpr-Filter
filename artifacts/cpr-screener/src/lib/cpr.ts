@@ -112,12 +112,13 @@ export function calcCPR(candle: OHLC): CPRLevels {
 }
 
 export function analyzeCPR(
-  symbol: string,
-  candles: OHLC[],
-  currentPrice: number,
-  change24h: number,
-  quoteVolume: number
-): CPRResult | null {
+    symbol: string,
+    candles: OHLC[],
+    currentPrice: number,
+    change24h: number,
+    quoteVolume: number,
+    openPrice?: number
+  ): CPRResult | null {
   if (candles.length < 2) return null;
 
   const prevCandle  = candles[candles.length - 2];
@@ -145,7 +146,7 @@ export function analyzeCPR(
     cprNarrowing,
     passes: cprRising && cprNarrowing,
     currentPrice,
-    openPrice: todayCandle.open,
+    openPrice: openPrice ?? todayCandle.open,
     change24h,
     quoteVolume,
   };
