@@ -156,12 +156,13 @@ export async function runScreener(
           ? ((currentPrice - liveCandle.open) / liveCandle.open) * 100
           : parseFloat(t.priceChangePercent);
 
-        return analyzeCPR(
+          return analyzeCPR(
           t.symbol,
           [prevCandle, todayCandle],
           currentPrice,
           changeFromDayOpen,
-          parseFloat(t.quoteVolume)
+          parseFloat(t.quoteVolume),
+          liveCandle ? liveCandle.open : todayCandle.open
         );
       })
     );
