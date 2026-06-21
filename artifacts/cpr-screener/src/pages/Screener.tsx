@@ -202,8 +202,8 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
   const [progress, setProgress] = useState({ done: 0, total: 0, symbol: "" });
   const [allResults, setAllResults] = useState<CPRResult[]>([]);
   const [filtered, setFiltered] = useState<CPRResult[]>([]);
-  const [sortKey, setSortKey] = useState<SortKey>("change24h");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortKey, setSortKey] = useState<SortKey>("compressionRatio");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [error, setError] = useState("");
@@ -603,9 +603,9 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
                     </th>
                     <th
                       className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
-                      onClick={() => toggleSort("currentPrice")}
+                      onClick={() => toggleSort("change24h")}
                     >
-                      Price <SortIcon k="currentPrice" />
+                      Price <SortIcon k="change24h" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       vs CPR
