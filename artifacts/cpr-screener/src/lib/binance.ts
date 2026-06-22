@@ -167,9 +167,9 @@ export async function runScreener(
         }
 
         const currentPrice = parseFloat(t.lastPrice);
-        const changeFromDayOpen = liveCandle
-          ? ((currentPrice - liveCandle.open) / liveCandle.open) * 100
-          : parseFloat(t.priceChangePercent);
+        // AFTER — always derive % from the same openPrice that's displayed
+        const openPriceUsed = liveCandle ? liveCandle.open : todayCandle.open;
+        const changeFromDayOpen = ((currentPrice - openPriceUsed) / openPriceUsed) * 100;
 
           return analyzeCPR(
           t.symbol,
