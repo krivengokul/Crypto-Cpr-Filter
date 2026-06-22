@@ -139,7 +139,7 @@ export function analyzeCPR(
   const compressionRatio = prevCPR.width > 0 ? (todayCPR.width / prevCPR.width) * 100 : 100;
   const cprNarrowing     = compressionRatio < 50;
   const bothTight        = todayCPR.widthPct < 1 && prevCPR.widthPct < 1;
-  const overlapHigher    = todayCPR.bc < prevCPR.tc && todayCPR.tc > prevCPR.tc;
+  const overlapHigher    = todayCPR.bc > prevCPR.bc && todayCPR.tc > prevCPR.tc;
   const overlapLower    = todayCPR.bc < prevCPR.bc && todayCPR.tc > prevCPR.bc; 
 
   return {
