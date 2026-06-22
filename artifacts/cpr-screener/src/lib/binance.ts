@@ -73,14 +73,29 @@ function isLiveDailyCandle(openTimeMs: number): boolean {
   return openTimeMs >= utcMidnightToday;
 }
 
+async function fetchActiveSymbols(): Promise<Set<string>> {
+  const res = await fetch(`${BASE}/exchangeInfo`);
+  if (!res.ok) throw new Error(`Binance exchangeInfo error: ${res.status}`);
+  const data: { symbols: { symbol: string; status: string }[] } = await res.json();
+  return new Set(
+    data.symbols
+      .filter((s) => s.status === "TRADING")
+      .map((s) => s.symbol)
+  );
+}
+
 export async function fetchTopUSDTSymbols(limit = 500): Promise<Ticker24h[]> {
-  const res = await fetch(`${BASE}/ticker/24hr`);
+  const [res, activeSymbols] = await Promise.all([
+    fetch(`${BASE}/ticker/24hr`),
+    fetchActiveSymbols(),
+  ]);
   if (!res.ok) throw new Error(`Binance ticker error: ${res.status}`);
   const data: Ticker24h[] = await res.json();
 
   return data
     .filter(
       (t) =>
+        activeSymbols.has(t.symbol) &&     // ← filters out delisted coins
         t.symbol.endsWith("USDT") &&
         !t.symbol.includes("DOWN") &&
         !t.symbol.includes("UP") &&
