@@ -35,6 +35,8 @@ export interface CPRResult {
   compressionRatio: number;
   cprRising: boolean;
   cprFalling: boolean;
+  lbJPattern1: boolean;
+  lbJPattern2: boolean;
   cprNarrowing: boolean;
   overlapHigher: boolean;
   overlapLower: boolean;
@@ -135,7 +137,11 @@ export function analyzeCPR(
   const minGap     = prevCPR.pivot * 0.001;
   const cprRising  = (todayCPR.bc - prevCPR.tc) >= minGap;
   const cprFalling = (prevCPR.bc  - todayCPR.tc) >= minGap;
-
+  const lbJPattern1  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && todayCPR.widthPct < 1 && 
+                        (todayCPR.s2 < prevCPR.s1 && todayCPR.s3 > prevCPR.s2); //1LB-PL12CL23:2PU4
+  const lbJPattern2  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && todayCPR.widthPct < 1 &&
+                        (todayCPR.s1 < prevCPR.s1 && todayCPR.s2 < prevCPR.s2 && 
+                          todayCPR.s3 < prevCPR.s3 && todayCPR.s4 < prevCPR.s4); //ALLD-U2<PU1:2U4
   const compressionRatio = prevCPR.width > 0 ? (todayCPR.width / prevCPR.width) * 100 : 100;
   const cprNarrowing     = compressionRatio < 50;
   const bothTight        = todayCPR.widthPct < 1 && prevCPR.widthPct < 1;
@@ -149,6 +155,8 @@ export function analyzeCPR(
     compressionRatio,
     cprRising,
     cprFalling,
+    lbJPattern1,
+    lbJPattern2,
     cprNarrowing,
     overlapHigher,
     overlapLower,  

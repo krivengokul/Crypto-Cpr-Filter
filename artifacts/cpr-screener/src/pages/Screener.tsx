@@ -84,6 +84,8 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
     case "rising":
       return r.cprRising && r.cprNarrowing;
     case "falling":
+      return r.lbJPattern1 && r.lbJPattern2;
+    case "falling-all":
       return r.cprFalling && r.cprNarrowing;
     case "inside-value":
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;

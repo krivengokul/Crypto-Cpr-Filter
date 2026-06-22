@@ -25,6 +25,7 @@ export interface Pattern {
 export const patterns: Pattern[] = [
   { id: "rising",             label: "CPR Rising",          subtitle: "Bullish pivot breakout",    icon: TrendingUp },
   { id: "falling",            label: "CPR Falling",         subtitle: "Bearish pivot breakdown",   icon: TrendingDown },
+  { id: "falling-all",        label: "CPR Falling All",     subtitle: "Bearish pivot breakdown",   icon: TrendingDown },
   { id: "higher-value",       label: "Higher Value CPR",    subtitle: "Price above CPR zone",      icon: ArrowUpCircle },
   { id: "lower-value",        label: "Lower Value CPR",     subtitle: "Price below CPR zone",      icon: ArrowDownCircle },
   { id: "overlapping-higher", label: "Overlapping Higher",  subtitle: "CPR zones stacking up",     icon: Layers },
