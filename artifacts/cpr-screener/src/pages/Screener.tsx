@@ -326,8 +326,16 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
             });
           })
         );
-        const apply = (prev: CPRResult[]): CPRResult[] =>
-          prev.map((r) => { const live = priceMap.get(r.symbol); return live ? { ...r, currentPrice: live.price, change24h: live.change } : r; });
+        // AFTER — use r.openPrice (your 5:30 AM IST baseline) for % calc
+      const apply = (prev: CPRResult[]): CPRResult[] =>
+        prev.map((r) => {
+          const live = priceMap.get(r.symbol);
+          if (!live) return r;
+          const change24h = r.openPrice > 0
+            ? ((live.price - r.openPrice) / r.openPrice) * 100
+            : live.change; // fallback
+          return { ...r, currentPrice: live.price, change24h };
+        });
         setAllResults((p) => apply(p));
         setFiltered((p) => apply(p));
       } catch { /* silent */ }
@@ -352,12 +360,17 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
         const tickers: Array<{ symbol: string; mark_price: string; ltp_change_24h: string }> =
           (data.result ?? []) as Array<{ symbol: string; mark_price: string; ltp_change_24h: string }>;
         const priceMap = new Map(tickers.map((t) => [t.symbol, t]));
+                // AFTER for Delta
         const apply = (prev: CPRResult[]): CPRResult[] =>
           prev.map((r) => {
             const t = priceMap.get(r.symbol);
             if (!t) return r;
             const price = parseFloat(t.mark_price);
-            return { ...r, currentPrice: price > 0 ? price : r.currentPrice, change24h: parseFloat(t.ltp_change_24h) };
+            if (price <= 0) return r;
+            const change24h = r.openPrice > 0
+              ? ((price - r.openPrice) / r.openPrice) * 100
+              : parseFloat(t.ltp_change_24h); // fallback
+            return { ...r, currentPrice: price, change24h };
           });
         setDeltaAllResults((p) => apply(p));
         setDeltaFiltered((p) => apply(p));
