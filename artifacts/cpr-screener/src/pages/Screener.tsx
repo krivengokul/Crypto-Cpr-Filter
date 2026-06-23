@@ -103,6 +103,8 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
       return (r.cprRising && r.todayCPR.r1 > r.prevCPR.r4);
     case "lower-bullish":
       return (r.cprFalling && r.cprNarrowing && r.prevCPR.r1  > r.todayCPR.r4);
+    case "structure-bearish":
+      return r.cprFalling && r.strHBBearish;
     default:
       return false;
   }
