@@ -83,12 +83,14 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
   switch (pattern) {
     case "rising":
       return r.cprRising && r.cprNarrowing;
+    case "falling-all":
+      return r.cprFalling && r.cprNarrowing;
     case "1LB-PL12CL23":
       return r.lbJPattern1;
     case "LBALLD-U2<PU1":
       return r.lbJPattern2;
-    case "falling-all":
-      return r.cprFalling && r.cprNarrowing;
+    case "HB-PU12CU23":
+      return r.hbJPattern1;  
     case "inside-value":
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
     case "overlapping-higher":
