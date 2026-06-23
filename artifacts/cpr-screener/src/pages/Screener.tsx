@@ -83,8 +83,12 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
   switch (pattern) {
     case "littleabove":
       return r.cprRising && r.narrowCPR;
-    case "falling-all":
-      return r.cprFalling && r.cprNarrowing;
+    case "la-allstepup":
+      return r.cprRising && r.narrowCPR && r.laallstepup;
+    case "littlebelow":
+      return r.cprFalling && r.narrowCPR;
+    case "lb-allstepdown":
+      return r.cprFalling && r.narrowCPR && r.lballstepdown;
     case "1LB-PL12CL23":
       return r.lbJPattern1;
     case "LBALLD-U2<PU1":

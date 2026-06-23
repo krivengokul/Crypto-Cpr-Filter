@@ -34,7 +34,9 @@ export interface CPRResult {
   prevCPR: CPRLevels;
   compressionRatio: number;
   cprRising: boolean;
+  laallstepup: boolean;
   cprFalling: boolean;
+  lballstepdown: boolean;
   lbJPattern1: boolean;
   lbJPattern2: boolean;
   hbJPattern1: boolean;
@@ -140,7 +142,11 @@ export function analyzeCPR(
 
   const minGap     = prevCPR.pivot * 0.001;
   const cprRising  = (todayCPR.bc - prevCPR.tc) >= minGap;
+  const laallstepup   = (prevCPR.r1 < todayCPR.r1 && prevCPR.r2 < todayCPR.r2 && prevCPR.r3 < todayCPR.r3 && prevCPR.r4 < todayCPR.r4) &&
+                        (prevCPR.s1 < todayCPR.s1 && prevCPR.s2 < todayCPR.s2 && prevCPR.s3 < todayCPR.s3 && prevCPR.s4 < todayCPR.s4);
   const cprFalling = (prevCPR.bc  - todayCPR.tc) >= minGap;
+  const lballstepdown   = (prevCPR.r1 > todayCPR.r1 && prevCPR.r2 > todayCPR.r2 && prevCPR.r3 > todayCPR.r3 && prevCPR.r4 > todayCPR.r4) &&
+                        (prevCPR.s1 > todayCPR.s1 && prevCPR.s2 > todayCPR.s2 && prevCPR.s3 > todayCPR.s3 && prevCPR.s4 > todayCPR.s4);
   const lbJPattern1  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && todayCPR.widthPct < 1 && 
                           (todayCPR.s2 < prevCPR.s1 && todayCPR.s3 > prevCPR.s2); //1LB-PL12CL23:2PU4
   const lbJPattern2  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && todayCPR.widthPct < 1 && todayCPR.r2 < prevCPR.r1 &&
@@ -164,7 +170,9 @@ export function analyzeCPR(
     prevCPR,
     compressionRatio,
     cprRising,
+    laallstepup,
     cprFalling,
+    lballstepdown,
     lbJPattern1,
     lbJPattern2,
     hbJPattern1,
