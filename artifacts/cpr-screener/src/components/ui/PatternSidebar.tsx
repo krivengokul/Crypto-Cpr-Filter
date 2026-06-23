@@ -34,11 +34,11 @@ export const patterns: Pattern[] = [
   { id: "overlapping-lower",  label: "Overlapping Lower",   subtitle: "CPR zones stacking down",   icon: LayersIcon },
   { id: "inside-value",       label: "Inside Value CPR",    subtitle: "Price inside CPR range",    icon: Crosshair },
   { id: "outside-value",      label: "Outside Value CPR",   subtitle: "Price outside CPR range",   icon: Maximize2 },
-  { id: "structure-bullish",  label: "U1>PU4 Bullish",   subtitle: "Higher highs forming",      icon: BarChart2 },
-  { id: "structure-bullish-all",  label: "U1>PU4 Bullish All",   subtitle: "Higher highs forming",      icon: BarChart2 },
   { id: "lower-bullish",      label: "LowerCPR Bullish",    subtitle: "Higher highs forming",      icon: BarChart2 },
-  { id: "structure-bigabove",  label: "Structure BigAbove",   subtitle: "Wide CPR Above PCPR",        icon: BarChart },
-  { id: "structure-bigbelow",  label: "Structure BigBelow",   subtitle: "Wide CPR Below PCPR",        icon: BarChart }
+  { id: "structure-bigabove", label: "Structure BigAbove",  subtitle: "Wide CPR Above PCPR",       icon: BarChart },
+  { id: "HA-U1>PU4",          label: "U1 > Previous U4",    subtitle: "Todays U1> Previous U4",    icon: BarChart2 },
+  { id: "HAThin-U1>PU4",      label: "U1>PU4 Bullish",      subtitle: "Higher highs forming",      icon: BarChart2 },
+  { id: "structure-bigbelow", label: "Structure BigBelow",   subtitle: "Wide CPR Below PCPR",        icon: BarChart }
 ];
 
 interface PatternSidebarProps {
