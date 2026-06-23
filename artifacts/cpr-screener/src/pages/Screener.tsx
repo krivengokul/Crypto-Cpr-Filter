@@ -215,7 +215,8 @@ function SRLadder({
   );
 }
 
-export default function Screener({ activePattern = "rising" }: { activePattern?: string }) {
+// AFTER
+export default function Screener({ activePattern = "littleabove", scanKey = 0 }: { activePattern?: string; scanKey?: number }) {
   const [status, setStatus] = useState<"idle" | "scanning" | "done" | "error">("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0, symbol: "" });
   const [allResults, setAllResults] = useState<CPRResult[]>([]);
@@ -309,6 +310,13 @@ export default function Screener({ activePattern = "rising" }: { activePattern?:
   useEffect(() => {
     if (shouldAutoScan()) doScan();
   }, [doScan]);
+
+  useEffect(() => {
+  if (scanKey > 0) {
+    doScan();
+    doDeltaScan();
+    }
+  }, [scanKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const tick = () => setCountdown(formatCountdown(nextScanUtc));
