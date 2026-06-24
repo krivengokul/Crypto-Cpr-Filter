@@ -47,6 +47,7 @@ export interface CPRResult {
   overlapHigher: boolean;
   overlapLower: boolean;
   lbtJPattern1: boolean;
+  hbJPattern2: boolean;
   strWideCPR: boolean;
   narrowCPR: boolean;
   bothTight: boolean;        
@@ -145,10 +146,16 @@ export function analyzeCPR(
 
   const minGap     = prevCPR.pivot * 0.001;
   const cprRising  = (todayCPR.bc - prevCPR.tc) >= minGap;
+  const cprFalling = (prevCPR.bc  - todayCPR.tc) >= minGap;
+  const strWideCPR    = todayCPR.widthPct > prevCPR.widthPct;
+  const narrowCPR    = todayCPR.widthPct < prevCPR.widthPct;
+  const compressionRatio = prevCPR.width > 0 ? (todayCPR.width / prevCPR.width) * 100 : 100;
+  const cprNarrowing     = compressionRatio < 50;
+  const bothTight        = todayCPR.widthPct < 0.5 && prevCPR.widthPct < 0.5;
+
   const LAPL12CL23 = (todayCPR.s2 < prevCPR.s1 && todayCPR.s3 > prevCPR.s2); //LA-PL12CL23:2PL4;
   const laallstepup   = (prevCPR.r1 < todayCPR.r1 && prevCPR.r2 < todayCPR.r2 && prevCPR.r3 < todayCPR.r3 && prevCPR.r4 < todayCPR.r4) &&
                         (prevCPR.s1 < todayCPR.s1 && prevCPR.s2 < todayCPR.s2 && prevCPR.s3 < todayCPR.s3 && prevCPR.s4 < todayCPR.s4);
-  const cprFalling = (prevCPR.bc  - todayCPR.tc) >= minGap;
   const lballstepdown   = (prevCPR.r1 > todayCPR.r1 && prevCPR.r2 > todayCPR.r2 && prevCPR.r3 > todayCPR.r3 && prevCPR.r4 > todayCPR.r4) &&
                         (prevCPR.s1 > todayCPR.s1 && prevCPR.s2 > todayCPR.s2 && prevCPR.s3 > todayCPR.s3 && prevCPR.s4 > todayCPR.s4);
   const LBAllStepsBdown = ((prevCPR.s1 > todayCPR.s1 && todayCPR.s1 > prevCPR.s2) && (prevCPR.s2 > todayCPR.s2 && todayCPR.s2 > prevCPR.s3)&& 
@@ -159,17 +166,15 @@ export function analyzeCPR(
   const lbJPattern2  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && todayCPR.widthPct < 1 && todayCPR.r2 < prevCPR.r1 &&
                         (todayCPR.s1 < prevCPR.s1 && todayCPR.s2 < prevCPR.s2 && 
                           todayCPR.s3 < prevCPR.s3 && todayCPR.s4 < prevCPR.s4); //LBALLD-U2<PU1:2U4
-  const hbJPattern1  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && prevCPR.widthPct < 1 && 
-                          (todayCPR.s2 > prevCPR.s1 && todayCPR.s3 < prevCPR.s2); //HB-PU12CU23:2PU4
-  const compressionRatio = prevCPR.width > 0 ? (todayCPR.width / prevCPR.width) * 100 : 100;
-  const cprNarrowing     = compressionRatio < 50;
-  const bothTight        = todayCPR.widthPct < 0.5 && prevCPR.widthPct < 0.5;
+  
   const overlapHigher    = (todayCPR.bc > prevCPR.bc && todayCPR.bc < prevCPR.tc) && todayCPR.tc > prevCPR.tc;
   const overlapLower    = (todayCPR.tc < prevCPR.tc && todayCPR.tc > prevCPR.bc) && todayCPR.bc < prevCPR.bc;
   const lbtJPattern1   = (todayCPR.r1 < prevCPR.r1 && todayCPR.s1 < prevCPR.s1) &&
                           (prevCPR.r1 > todayCPR.r1 && prevCPR.r2 > todayCPR.r2 && prevCPR.r3 > todayCPR.r3 && prevCPR.r4 > todayCPR.r4)
-  const strWideCPR    = todayCPR.widthPct > prevCPR.widthPct;
-  const narrowCPR    = todayCPR.widthPct < prevCPR.widthPct;
+  
+  const hbJPattern1  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && prevCPR.widthPct < 1 && 
+                          (todayCPR.s2 > prevCPR.s1 && todayCPR.s3 < prevCPR.s2); //HB-PU12CU23:2PU4
+  const hbJPattern2  = (todayCPR.s1 < prevCPR.s4 && todayCPR.r1 > prevCPR.tc) && prevCPR.widthPct < 0.5;
 
   return {
     symbol,
@@ -186,6 +191,7 @@ export function analyzeCPR(
     lbJPattern1,
     lbJPattern2,
     hbJPattern1,
+    hbJPattern2,
     cprNarrowing,
     overlapHigher,
     overlapLower,

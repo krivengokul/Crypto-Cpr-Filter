@@ -101,8 +101,6 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
       return r.lbJPattern1;
     case "LBALLD-U2<PU1":
       return r.lbJPattern2;
-    case "HB-PU12CU23":
-      return r.hbJPattern1;  
     case "inside-cpr":
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
     case "outside-cpr":
@@ -123,8 +121,10 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
       return (r.cprRising && r.strWideCPR && r.bothTight && r.todayCPR.r1 > r.prevCPR.r4);
     case "structure-bigbelow":
       return r.cprFalling && r.strWideCPR;
-    case "HB-L1<PL4-U3>PU4":
-      return (r.cprFalling && r.strWideCPR && r.todayCPR.s1 < r.prevCPR.s4 && r.todayCPR.r3 > r.prevCPR.r4);
+    case "HB-PU12CU23":
+      return r.hbJPattern1;
+    case "HB-L1<PL4-U1>TCPR":
+      return r.cprFalling && r.strWideCPR && r.hbJPattern2;
     default:
       return false;
   }

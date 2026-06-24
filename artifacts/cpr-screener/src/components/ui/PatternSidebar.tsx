@@ -33,7 +33,6 @@ export const patterns: Pattern[] = [
   { id: "LB-PU12CU23",        label: "LB-PU12CU23:2PU4",    subtitle: "Bullish Target:2PU4",       icon: TrendingUp },
   { id: "1LB-PL12CL23",       label: "1LB-PL12CL23:2PU4",   subtitle: "Bullish Target:2PU4",       icon: TrendingUp },
   { id: "LBALLD-U2<PU1",      label: "LBALLD-U2<PU1:2U4",   subtitle: "Bullish Target:2U4",        icon: TrendingUp },
-  { id: "HB-PU12CU23",        label: "HB-PU12CU23:2PU4",    subtitle: "Bullish Target:2PU4",       icon: TrendingUp },
   { id: "higher-value",       label: "Higher Value CPR",    subtitle: "Price above CPR zone",      icon: ArrowUpCircle },
   { id: "lower-value",        label: "Lower Value CPR",     subtitle: "Price below CPR zone",      icon: ArrowDownCircle },
   { id: "overlapping-higher", label: "Overlapping Higher",  subtitle: "CPR zones stacking up",     icon: Layers },
@@ -45,8 +44,9 @@ export const patterns: Pattern[] = [
   { id: "structure-bigabove", label: "Structure BigAbove",  subtitle: "Wide CPR Above PCPR",       icon: BarChart },
   { id: "HA-U1>PU4",          label: "U1 > Previous U4",    subtitle: "Todays U1> Previous U4",    icon: BarChart2 },
   { id: "HAThin-U1>PU4",      label: "U1>PU4 Bullish",      subtitle: "Higher highs forming",      icon: BarChart2 },
-  { id: "structure-bigbelow", label: "Structure BigBelow",   subtitle: "Wide CPR Below PCPR",      icon: BarChart },
-  { id: "HB-L1<PL4-U3>PU4",      label: "L1<PL4, U3>PU4 Bullish",      subtitle: "Bullish Target:2U4",    icon: BarChart2 }
+  { id: "structure-bigbelow", label: "Structure BigBelow",  subtitle: "Wide CPR Below PCPR",      icon: BarChart },
+  { id: "HB-L1<PL4-U1>TCPR",  label: "L1<PL4, U1>TCPR",     subtitle: "Bullish Target:2U4",       icon: TrendingUp },
+  { id: "HB-PU12CU23",        label: "HB-PU12CU23:2PU4",    subtitle: "Bullish Target:2PU4",       icon: TrendingUp }
 ];
 
 interface PatternSidebarProps {
