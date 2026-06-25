@@ -108,7 +108,7 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
     case "overlapping-higher":
       return r.overlapHigher;
     case  "LAT-PU12CU23":
-      return r.overlapHigher && r.allupbelow && r.PU12CU23 && r.PL12CL23;
+      return r.overlapHigher && r.PU12CU23 && r.PL12CL23;
     case "overlapping-lower":
       return r.overlapLower;
     case "LBT-PU1>U1PL1>L1":
