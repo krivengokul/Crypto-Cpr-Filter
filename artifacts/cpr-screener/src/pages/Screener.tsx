@@ -125,6 +125,8 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
       return r.hbJPattern1;
     case "HB-L1<PL4-U1>TCPR":
       return r.cprFalling && r.strWideCPR && r.hbJPattern2;
+    case "HB-L1<PL2-U12CPU12":
+      return r.cprFalling && r.strWideCPR && r.hbJPattern3;
     default:
       return false;
   }

@@ -48,6 +48,7 @@ export interface CPRResult {
   overlapLower: boolean;
   lbtJPattern1: boolean;
   hbJPattern2: boolean;
+  hbJPattern3: boolean;
   strWideCPR: boolean;
   narrowCPR: boolean;
   bothTight: boolean;        
@@ -173,8 +174,10 @@ export function analyzeCPR(
                           (prevCPR.r1 > todayCPR.r1 && prevCPR.r2 > todayCPR.r2 && prevCPR.r3 > todayCPR.r3 && prevCPR.r4 > todayCPR.r4)
   
   const hbJPattern1  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && prevCPR.widthPct < 1 && 
-                          (todayCPR.s2 > prevCPR.s1 && todayCPR.s3 < prevCPR.s2); //HB-PU12CU23:2PU4
-  const hbJPattern2  = (todayCPR.s1 < prevCPR.s4 && todayCPR.r1 > prevCPR.tc) && prevCPR.widthPct < 0.5;
+                          (todayCPR.s2 > prevCPR.s1 && todayCPR.s3 < prevCPR.s2); //HB-PU12CU23:2PU4 - plZ CORRECT
+  const hbJPattern2  = (todayCPR.s1 < prevCPR.s4 && todayCPR.r1 > prevCPR.tc) && prevCPR.widthPct < 0.5; //ONE MORE COND
+  const hbJPattern3  = todayCPR.s1 < prevCPR.s2 && prevCPR.widthPct < 0.5 &&
+                        ((todayCPR.r1 < prevCPR.r1 && todayCPR.r1 > prevCPR.tc) && (todayCPR.r2 > prevCPR.r2 && todayCPR.r2 < prevCPR.r3)); //LB-U12CPU12:2PU4
 
   return {
     symbol,
@@ -192,6 +195,7 @@ export function analyzeCPR(
     lbJPattern2,
     hbJPattern1,
     hbJPattern2,
+    hbJPattern3,
     cprNarrowing,
     overlapHigher,
     overlapLower,
