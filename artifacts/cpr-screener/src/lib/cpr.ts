@@ -174,11 +174,11 @@ export function analyzeCPR(
   const lbtJPattern1   = (todayCPR.r1 < prevCPR.r1 && todayCPR.s1 < prevCPR.s1) &&
                           (prevCPR.r1 > todayCPR.r1 && prevCPR.r2 > todayCPR.r2 && prevCPR.r3 > todayCPR.r3 && prevCPR.r4 > todayCPR.r4)
   
-  const hbJPattern1  = ((prevCPR.bc  - todayCPR.tc) >= minGap) && prevCPR.widthPct < 1 && 
-                          (todayCPR.s2 > prevCPR.s1 && todayCPR.s3 < prevCPR.s2); //HB-PU12CU23:2PU4 - plZ CORRECT
-  const hbJPattern2  = (todayCPR.s1 < prevCPR.s4 && todayCPR.r1 > prevCPR.tc) && prevCPR.widthPct < 0.5; //ONE MORE COND
+  const hbJPattern1  = (todayCPR.s1 < prevCPR.s2 && todayCPR.s1 > prevCPR.s3) && prevCPR.widthPct < 0.5 && // L1<PL2
+                          (todayCPR.s2 > prevCPR.r1 && todayCPR.s3 < prevCPR.r2); //HB-PU12CU23:2PU4
+  const hbJPattern2  = (todayCPR.s1 < prevCPR.s4 && todayCPR.r1 > prevCPR.tc) && prevCPR.widthPct < 0.5; //ONE,2 MORE COND
   const hbJPattern3  = (todayCPR.s1 < prevCPR.s2 && todayCPR.s1 > prevCPR.s3) && prevCPR.widthPct < 0.5 && // L1<PL2
-                        ((todayCPR.r1 < prevCPR.r1 && todayCPR.r1 > prevCPR.tc) && (todayCPR.r2 > prevCPR.r2 && todayCPR.r2 < prevCPR.r3)); //HB-U12CPU12:2PU4
+                        ((todayCPR.r1 < prevCPR.r1 && todayCPR.r1 > prevCPR.tc) && (todayCPR.r2 > prevCPR.r2 && todayCPR.r2 < prevCPR.r3)); //HB-U12CPU12:2L4 REFACTOR THIS
   const hbJPattern4  = (todayCPR.s1 > prevCPR.s1 && todayCPR.s1 < prevCPR.bc) && prevCPR.widthPct < 0.5 && // L1>PL1
                         todayCPR.r4 < prevCPR.r1 ; //HB-PU1CU234:2L4                      
   return {

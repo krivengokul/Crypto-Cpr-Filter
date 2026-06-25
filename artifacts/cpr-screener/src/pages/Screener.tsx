@@ -121,8 +121,8 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
       return (r.cprRising && r.strWideCPR && r.bothTight && r.todayCPR.r1 > r.prevCPR.r4);
     case "structure-bigbelow":
       return r.cprFalling && r.strWideCPR;
-    case "HB-PU12CU23":
-      return r.hbJPattern1;
+    case "HB-L1<PL1-PU12CU23":
+      return r.cprFalling && r.strWideCPR && r.hbJPattern1;
     case "HB-L1<PL4-U1>TCPR":
       return r.cprFalling && r.strWideCPR && r.hbJPattern2;
     case "HB-L1<PL2-U12CPU12":
