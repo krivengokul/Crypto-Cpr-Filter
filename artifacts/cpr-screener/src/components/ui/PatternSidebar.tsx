@@ -36,7 +36,7 @@ export const patterns: Pattern[] = [
   { id: "Price-AbovePDH",     label: "Price Above PDH",     subtitle: "Price Above PDH zone",      icon: ArrowUpCircle },
   { id: "Price-BelowPDL",     label: "Price Below PDL",     subtitle: "Price Below PDL zone",      icon: ArrowDownCircle },
   { id: "overlapping-higher", label: "Overlapping Higher",  subtitle: "CPR zones stacking up",     icon: Layers },
-  { id: "LAT-PU12CU23",       label: "PU12CU23,AllUpBelow", subtitle: "Bullish Target:2U4",        icon: Layers },
+  { id: "LAT-PU12CU23",       label: "PU12CU23,PL12CL23",   subtitle: "Bullish Target:2U4",        icon: Layers },
   { id: "overlapping-lower",  label: "Overlapping Lower",   subtitle: "CPR zones stacking down",   icon: LayersIcon },
   { id: "LBT-PU1>U1PL1>L1",   label: "LBT-PU1>U1PL1>L1",    subtitle: "Bullish Target:2PU4",       icon: LayersIcon },
   { id: "inside-cpr",         label: "Inside CPR",          subtitle: "Inside CPR range",         icon: Crosshair },
