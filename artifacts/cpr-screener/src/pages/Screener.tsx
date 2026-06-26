@@ -96,7 +96,7 @@ function passesPattern(r: CPRResult, pattern: string): boolean {
     case "lb-allstepdown":
       return r.cprFalling && r.narrowCPR && r.alldownabove && r.alldownbelow;
     case "LB-PU12CU23":
-      return r.cprFalling  && r.alldownbelow && r.PU12CU23;
+      return r.cprFalling && r.narrowCPR  && r.PU12CU23;
     case "1LB-PL12CL23":
       return r.lbJPattern1;
     case "LBALLD-U2<PU1":
