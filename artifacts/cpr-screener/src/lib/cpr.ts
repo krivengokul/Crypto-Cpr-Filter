@@ -170,20 +170,20 @@ export function analyzeCPR(
   
   const overlapHigher    = (todayCPR.bc > prevCPR.bc && todayCPR.bc < prevCPR.tc) && todayCPR.tc > prevCPR.tc;
 
-  const allupabove =  (todayCPR.r1 > prevCPR.r1) && (todayCPR.r1 < prevCPR.tc) &&// R1 stepped up
-                      (todayCPR.r2 > prevCPR.r2) && (todayCPR.r2 < prevCPR.r1) &&// R2 stepped up
-                      (todayCPR.r3 > prevCPR.r3) && (todayCPR.r3 < prevCPR.r2) &&// R3 stepped up
-                      (todayCPR.r4 > prevCPR.r4) && (todayCPR.r4 < prevCPR.r3);// R4 stepped up
+  const allupabove =  (todayCPR.r1 > prevCPR.r1) && (todayCPR.r1 < prevCPR.r1) &&// R1 stepped up
+                      (todayCPR.r2 > prevCPR.r2) && (todayCPR.r2 < prevCPR.r2) &&// R2 stepped up
+                      (todayCPR.r3 > prevCPR.r3) && (todayCPR.r3 < prevCPR.r3) &&// R3 stepped up
+                      (todayCPR.r4 > prevCPR.r4);// R4 stepped up
   
   const allupbelow =  (todayCPR.s1 > prevCPR.s1) && (todayCPR.s1 < prevCPR.bc) &&// S1 stepped up
                       (todayCPR.s2 > prevCPR.s2) && (todayCPR.s2 < prevCPR.s1) &&// S2 stepped up
                       (todayCPR.s3 > prevCPR.s3) && (todayCPR.s3 < prevCPR.s2) &&// S3 stepped up
                       (todayCPR.s4 > prevCPR.s4) && (todayCPR.s4 < prevCPR.s3);// S4 stepped up
 
-  const alldownabove = (todayCPR.r1 < prevCPR.r1 && todayCPR.r1 > prevCPR.r2) && // R1 stepped down
-                        (todayCPR.r2 < prevCPR.r2  && todayCPR.r2 > prevCPR.r3)&& 
-                        (todayCPR.r3 < prevCPR.r3  && todayCPR.r3 > prevCPR.r4) && 
-                          todayCPR.r4 < prevCPR.r4 ; // R4 stepped down
+  const alldownabove = (todayCPR.r1 < prevCPR.r1 && todayCPR.r1 > prevCPR.tc) && // R1 stepped down
+                        (todayCPR.r2 < prevCPR.r2  && todayCPR.r2 > prevCPR.r1)&& 
+                        (todayCPR.r3 < prevCPR.r3  && todayCPR.r3 > prevCPR.r2) && 
+                        (todayCPR.r4 < prevCPR.r4 && todayCPR.r4 > prevCPR.r3); // R4 stepped down
 
   const alldownbelow = (todayCPR.s1 < prevCPR.s1 && todayCPR.s1 > prevCPR.s2) && // S1 stepped down
                         (todayCPR.s2 < prevCPR.s2  && todayCPR.s2 > prevCPR.s3)&& 
