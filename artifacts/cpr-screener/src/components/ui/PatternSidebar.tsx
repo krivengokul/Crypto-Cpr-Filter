@@ -48,7 +48,7 @@ export const patterns: Pattern[] = [
   { id: "structure-bigabove", label: "Structure BigAbove",  subtitle: "Wide CPR Above PCPR",       icon: BarChart },
   { id: "HA-U1>PU4",          label: "U1 > Previous U4",    subtitle: "Todays U1> Previous U4",    icon: BarChart2 },
   { id: "HAThin-U1>PU4",      label: "U1>PU4 Bullish",      subtitle: "Higher highs forming",      icon: BarChart2 },
-  { id: "structure-bigbelow", label: "Structure BigBelow",  subtitle: "Wide CPR Below PCPR",      icon: BarChart },
+  { id: "structure-bigbelow", label: "Big Below",  subtitle: "Wide CPR Below PCPR",      icon: BarChart },
   { id: "HB-L1<PL1-PU12CU23", label: "L1<PL1, PU12CU23",  subtitle: "Bullish Target:2PU4",       icon: TrendingUp },
   { id: "HB-L1<PL4-U1>TCPR",  label: "L1<PL4, U1>TCPR",     subtitle: "Bullish Target:2U4",       icon: TrendingUp },
   { id: "HB-L1<PL2-U12CPU12", label: "L1<PL2, U12CPU12",   subtitle: "Bearish Target:L4",       icon: TrendingDown },
