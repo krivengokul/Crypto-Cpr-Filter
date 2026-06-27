@@ -110,6 +110,15 @@ export function calcCPR(candle: OHLC): CPRLevels {
   const width    = tc - bc;
   const widthPct = (width / pivot) * 100;
   const range    = h - l;
+  const r1 = 2 * pivot - l;
+  const s1 = 2 * pivot - h;
+  const r2 = pivot + range;
+  const s2 = pivot - range;
+  const r3 = h + 2 * (pivot - l);
+  const s3 = l - 2 * (h - pivot);
+  // TradingView-style extension
+  const r4 = r3 + range;
+  const s4 = s3 - range;
 
   return {
     pivot,
@@ -119,16 +128,14 @@ export function calcCPR(candle: OHLC): CPRLevels {
     widthPct,
     prevHigh: h,
     prevLow:  l,
-    r1: 2 * pivot - l,
-    r2: pivot + range,
-    r3: h + 2 * (pivot - l),
-    //r4: (h + 2 * (pivot - l)) + range,
-    r4:h + 3 * (pivot - l),
-    s1: 2 * pivot - h,
-    s2: pivot - range,
-    s3: l - 2 * (h - pivot),
-    //s4: (l - 2 * (h - pivot)) - range,
-    s4: l - 3 * (h - pivot)
+    r1,
+    r2,
+    r3,
+    r4,
+    s1,
+    s2,
+    s3,
+    s4
   };
 }
 
