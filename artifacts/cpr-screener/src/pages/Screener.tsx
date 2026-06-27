@@ -661,9 +661,19 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 className="text-xs px-2.5 py-1 rounded border transition-colors"
                 style={
                   showLABothTiny
-                    ? { borderColor: "#3b82f6", background: "rgba(59,130,246,0.15)", color: "#60a5fa" }
+                    ? { borderColor: "var(--foreground)", background: "transparent", color: "#fff" }
                     : { borderColor: "var(--border)", background: "transparent", color: "var(--muted-foreground)" }
                 }
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--foreground)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!showLABothTiny) {
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--muted-foreground)";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                  }
+                }}
                 title="Show symbols that match BOTH Structure LittleAbove AND TinyAbove-Both Tiny"
               >
                 {showLABothTiny ? "✕ LA-BothTiny" : "LA-BothTiny"}
