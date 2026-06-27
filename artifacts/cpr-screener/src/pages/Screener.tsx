@@ -251,6 +251,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [showLABothTiny, setShowLABothTiny] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -433,6 +434,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   useEffect(() => {
     if (allResults.length > 0) setFiltered(allResults.filter((r) => passesPattern(r, activePattern)));
     if (deltaAllResults.length > 0) setDeltaFiltered(deltaAllResults.filter((r) => passesPattern(r, activePattern)));
+    if (activePattern !== "littleabove") setShowLABothTiny(false);
   }, [activePattern, allResults, deltaAllResults]);
 
   const toggleSort = (key: SortKey) => {
@@ -453,6 +455,13 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   ];
 
   const getActivePool = (): CPRResultWithSource[] => {
+    if (showLABothTiny && activePattern === "littleabove") {
+      const binanceIntersect = allResults.filter((r) => passesPattern(r, "la-2tiny")).map((r) => ({ ...r, source: "binance" as const }));
+      const deltaIntersect = deltaAllResults.filter((r) => passesPattern(r, "la-2tiny")).map((r) => ({ ...r, source: "delta" as const }));
+      if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
+      if (activeTab === "delta") return deltaIntersect;
+      return binanceIntersect;
+    }
     if (activeTab === "combined") return showAll ? combinedAllResults : combinedResults;
     if (activeTab === "delta") return (showAll ? deltaAllResults : deltaFiltered).map((r) => ({ ...r, source: "delta" as const }));
     return (showAll ? allResults : filtered).map((r) => ({ ...r, source: "binance" as const }));
@@ -627,17 +636,39 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
 
         {/* Show-all toggle */}
         {currentStatus === "done" && (
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
             <span className="text-xs text-muted-foreground">
-              {showAll ? currentAllCount : currentFilteredCount} results
-              {!showAll && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
+              {showAll
+                ? currentAllCount
+                : showLABothTiny && activePattern === "littleabove"
+                ? displayed.length
+                : currentFilteredCount}{" "}
+              results
+              {!showAll && !showLABothTiny && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
+              {showLABothTiny && activePattern === "littleabove" && (
+                <span className="ml-1 text-blue-400">(LA-BothTiny intersection)</span>
+              )}
             </span>
             <button
-              onClick={() => setShowAll((v) => !v)}
+              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               {showAll ? "Show filtered only" : "Show all"}
             </button>
+            {activePattern === "littleabove" && !showAll && (
+              <button
+                onClick={() => setShowLABothTiny((v) => !v)}
+                className="text-xs px-2.5 py-1 rounded border transition-colors"
+                style={
+                  showLABothTiny
+                    ? { borderColor: "#3b82f6", background: "rgba(59,130,246,0.15)", color: "#60a5fa" }
+                    : { borderColor: "var(--border)", background: "transparent", color: "var(--muted-foreground)" }
+                }
+                title="Show symbols that match BOTH Structure LittleAbove AND TinyAbove-Both Tiny"
+              >
+                {showLABothTiny ? "✕ LA-BothTiny" : "LA-BothTiny"}
+              </button>
+            )}
           </div>
         )}
 
