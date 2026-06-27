@@ -82,6 +82,8 @@ export function passesPattern(r: CPRResult, pattern: string): boolean {
       return r.lbJPattern2;
     case "inside-cpr":
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
+    case "inside-cpr-expanded":
+      return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc && r.todayCPR.r4 > r.prevCPR.r4 && r.todayCPR.s4 < r.prevCPR.s4;
     case "outside-cpr":
       return r.todayCPR.tc > r.prevCPR.tc && r.todayCPR.bc < r.prevCPR.bc;
     case "outside-cpr-compressed":

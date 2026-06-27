@@ -49,6 +49,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [showLAAllUp, setShowLAAllUp] = useState(false);
   const [showLAPL12CL23, setShowLAPL12CL23] = useState(false);
   const [showOutsideCPRCompressed, setShowOutsideCPRCompressed] = useState(false);
+  const [showInsideCPRExpanded, setShowInsideCPRExpanded] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -233,6 +234,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     if (deltaAllResults.length > 0) setDeltaFiltered(deltaAllResults.filter((r) => passesPattern(r, activePattern)));
     if (activePattern !== "littleabove") { setShowLABothTiny(false); setShowLAAllUp(false); setShowLAPL12CL23(false); }
     if (activePattern !== "outside-cpr") { setShowOutsideCPRCompressed(false); }
+    if (activePattern !== "inside-cpr") { setShowInsideCPRExpanded(false); }
   }, [activePattern, allResults, deltaAllResults]);
 
   const toggleSort = (key: SortKey) => {
@@ -280,6 +282,17 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
         .map((r) => ({ ...r, source: "binance" as const }));
       const deltaIntersect = deltaAllResults
         .filter((r) => passesPattern(r, "outside-cpr-compressed"))
+        .map((r) => ({ ...r, source: "delta" as const }));
+      if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
+      if (activeTab === "delta") return deltaIntersect;
+      return binanceIntersect;
+    }
+    if (showInsideCPRExpanded && activePattern === "inside-cpr") {
+      const binanceIntersect = allResults
+        .filter((r) => passesPattern(r, "inside-cpr-expanded"))
+        .map((r) => ({ ...r, source: "binance" as const }));
+      const deltaIntersect = deltaAllResults
+        .filter((r) => passesPattern(r, "inside-cpr-expanded"))
         .map((r) => ({ ...r, source: "delta" as const }));
       if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
       if (activeTab === "delta") return deltaIntersect;
@@ -467,9 +480,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 ? displayed.length
                 : showOutsideCPRCompressed && activePattern === "outside-cpr"
                 ? displayed.length
+                : showInsideCPRExpanded && activePattern === "inside-cpr"
+                ? displayed.length
                 : currentFilteredCount}{" "}
               results
-              {!showAll && !showLABothTiny && !showLAAllUp && !showLAPL12CL23 && !showOutsideCPRCompressed && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
+              {!showAll && !showLABothTiny && !showLAAllUp && !showLAPL12CL23 && !showOutsideCPRCompressed && !showInsideCPRExpanded && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
               {showLABothTiny && activePattern === "littleabove" && (
                 <span className="ml-1 text-blue-400">(LA-BothTiny intersection)</span>
               )}
@@ -480,11 +495,14 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <span className="ml-1 text-blue-400">(PL12CL23 filter)</span>
               )}
               {showOutsideCPRCompressed && activePattern === "outside-cpr" && (
-                <span className="ml-1 text-foreground">(Compressed)</span>
+                <span className="ml-1 text-purple-400">(Compressed filter)</span>
+              )}
+              {showInsideCPRExpanded && activePattern === "inside-cpr" && (
+                <span className="ml-1 text-orange-400">(Expanded filter)</span>
               )}
             </span>
             <button
-              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); setShowLAAllUp(false); setShowLAPL12CL23(false); setShowOutsideCPRCompressed(false); }}
+              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); setShowLAAllUp(false); setShowLAPL12CL23(false); setShowOutsideCPRCompressed(false); setShowInsideCPRExpanded(false); }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               {showAll ? "Show filtered only" : "Show all"}
@@ -533,12 +551,25 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 onClick={() => setShowOutsideCPRCompressed((v) => !v)}
                 className={`text-xs px-2.5 py-1 rounded border transition-colors ${
                   showOutsideCPRCompressed
-                    ? "border-foreground text-foreground"
+                    ? "border-purple-400 text-purple-400"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
                 title="Show OutsideCPR symbols where today R4 < prev R4 AND today S4 > prev S4 (compressed range)"
               >
                 {showOutsideCPRCompressed ? "✕ Compressed" : "Compressed"}
+              </button>
+            )}
+            {activePattern === "inside-cpr" && !showAll && (
+              <button
+                onClick={() => setShowInsideCPRExpanded((v) => !v)}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  showInsideCPRExpanded
+                    ? "border-orange-400 text-orange-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Show InsideCPR symbols where today R4 > prev R4 AND today S4 < prev S4 (expanded range)"
+              >
+                {showInsideCPRExpanded ? "✕ Expanded" : "Expanded"}
               </button>
             )}
           </div>
