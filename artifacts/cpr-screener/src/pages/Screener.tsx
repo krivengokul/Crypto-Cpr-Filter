@@ -480,7 +480,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <span className="ml-1 text-blue-400">(PL12CL23 filter)</span>
               )}
               {showOutsideCPRCompressed && activePattern === "outside-cpr" && (
-                <span className="ml-1 text-purple-400">(Compressed filter)</span>
+                <span className="ml-1 text-foreground">(Compressed)</span>
               )}
             </span>
             <button
@@ -533,7 +533,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 onClick={() => setShowOutsideCPRCompressed((v) => !v)}
                 className={`text-xs px-2.5 py-1 rounded border transition-colors ${
                   showOutsideCPRCompressed
-                    ? "border-purple-400 text-purple-400"
+                    ? "border-foreground text-foreground"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
                 title="Show OutsideCPR symbols where today R4 < prev R4 AND today S4 > prev S4 (compressed range)"
