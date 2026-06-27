@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { runScreener } from "@/lib/binance";
 import { runDeltaScreener } from "@/lib/delta";
-import type { CPRLevels, CPRResult } from "@/lib/cpr";
+import type { CPRResult } from "@/lib/cpr";
 import {
   shouldAutoScan,
   markScannedToday,
@@ -20,228 +20,22 @@ import {
   formatCountdown,
   formatISTTime,
 } from "@/lib/scheduler";
+import {
+  type SortKey,
+  type SortDir,
+  type ActiveTab,
+  type CPRResultWithSource,
+  fmt,
+  fmtPct,
+  fmtVol,
+  getVal,
+  splitSymbol,
+  getChartUrl,
+  passesPattern,
+  distanceFromCPR,
+  SRLadder,
+} from "./ScreenerUtils";
 
-type SortKey = "symbol" | "compressionRatio" | "currentPrice" | "change24h" | "quoteVolume";
-type SortDir = "asc" | "desc";
-type ActiveTab = "binance" | "delta" | "combined";
-
-interface CPRResultWithSource extends CPRResult {
-  source: "binance" | "delta";
-}
-
-function fmt(v: number): string {
-  if (v === 0) return "0";
-  if (Math.abs(v) >= 1000) return v.toLocaleString("en-US", { maximumFractionDigits: 2 });
-  if (Math.abs(v) >= 1) return v.toFixed(4);
-  if (Math.abs(v) >= 0.001) return v.toFixed(5);
-  return v.toFixed(8);
-}
-
-function fmtPct(v: number): string {
-  return `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
-}
-
-function fmtVol(v: number): string {
-  if (v >= 1e9) return `$${(v / 1e9).toFixed(1)}B`;
-  if (v >= 1e6) return `$${(v / 1e6).toFixed(1)}M`;
-  if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
-  return `$${v.toFixed(0)}`;
-}
-
-function getVal(r: CPRResultWithSource, key: SortKey): number | string {
-  switch (key) {
-    case "symbol":          return r.symbol;
-    case "compressionRatio": return r.compressionRatio;
-    case "currentPrice":    return r.currentPrice;
-    case "change24h":       return r.change24h;
-    case "quoteVolume":     return r.quoteVolume;
-  }
-}
-
-function splitSymbol(symbol: string, source: "binance" | "delta") {
-  if (source === "binance") {
-    if (symbol.endsWith("USDT")) return { base: symbol.slice(0, -4), quote: "USDT" };
-    return { base: symbol, quote: "" };
-  }
-  const parts = symbol.split("_");
-  if (parts.length === 2) return { base: parts[0], quote: parts[1] };
-  return { base: symbol, quote: "" };
-}
-
-function getChartUrl(symbol: string, source: "binance" | "delta"): string {
-  if (source === "binance") {
-    return `https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}`;
-  }
-  const tvSymbol =
-    source === "delta" && symbol.endsWith("USD") && !symbol.endsWith("USDT")
-      ? symbol.slice(0, -3) + "USDT"
-      : symbol;
-  return `https://www.tradingview.com/chart/?symbol=BINANCE:${tvSymbol}`;
-}
-
-function passesPattern(r: CPRResult, pattern: string): boolean {
-  switch (pattern) {
-    case "littleabove":
-      return r.cprRising && r.narrowCPR;
-    case "la-2tiny":
-      return r.cprRising && r.narrowCPR && r.bothTight;
-    case "LA-PL12CL23":
-      return r.cprRising && r.narrowCPR && r.PL12CL23;
-    case "la-allstepup":
-      return r.cprRising && r.narrowCPR && r.allupabove && r.allupbelow;
-    case "littlebelow":
-      return r.cprFalling && r.narrowCPR;
-    case "lb-2tiny":
-      return r.cprFalling && r.narrowCPR && r.bothTight;
-    case "lb-allstepdown":
-      return r.cprFalling && r.narrowCPR && r.alldownabove && r.alldownbelow;
-    case "LB-PU12CU23":
-      return r.cprFalling && r.narrowCPR  && r.todayCPR.s2  > r.prevCPR.s2 && (r.PU12CU23 || r.PU23CU34);
-    case "1LB-PL12CL23":
-      return r.lbJPattern1;
-    case "LBALLD-U2<PU1":
-      return r.lbJPattern2;
-    case "inside-cpr":
-      return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
-    case "outside-cpr":
-      return r.todayCPR.tc > r.prevCPR.tc && r.todayCPR.bc < r.prevCPR.bc;
-    case "overlapping-higher":
-      return r.overlapHigher;
-    case  "LAT-PU12CU23":
-      return r.overlapHigher && r.PU12CU23 && r.PL12CL23 && r.todayCPR.prevHigh > r.prevCPR.prevHigh;
-    case "overlapping-lower":
-      return r.overlapLower;
-    case "LBT-PU1>U1PL1>L1":
-      return (r.overlapLower && r.lbtJPattern1 && r.bothTight);
-    case "lower-bullish":
-      return (r.cprFalling && r.cprNarrowing && r.prevCPR.r1  > r.todayCPR.r4);
-    case "Price-AbovePDH":
-      return (r.currentPrice > r.todayCPR.prevHigh);
-    case "Price-BelowPDL":
-      return (r.currentPrice < r.todayCPR.prevLow);
-    case "structure-bigabove":
-      return r.cprRising && r.strWideCPR;
-    case "HA-U1>PU4":
-      return (r.cprRising && r.strWideCPR && r.todayCPR.r1 > r.prevCPR.r4);
-    case "HAThin-U1>PU4":
-      return (r.cprRising && r.strWideCPR && r.bothTight && r.todayCPR.r1 > r.prevCPR.r4);
-    case "structure-bigbelow":
-      return r.cprFalling && r.strWideCPR;
-    case "HB-L1<PL1-PU12CU23":
-      return r.cprFalling && r.strWideCPR && r.hbJPattern1;
-    case "HB-L1<PL4-U1>TCPR":
-      return r.cprFalling && r.strWideCPR && r.hbJPattern2;
-    case "HB-L1<PL2-U12CPU12":
-      return r.cprFalling && r.strWideCPR && r.hbJPattern3;
-    case "HB-L1>PL1-PU1CU234":
-      return r.cprFalling && r.strWideCPR && r.hbJPattern4;
-    default:
-      return false;
-  }
-}
-
-function distanceFromCPR(
-  price: number,
-  tc: number,
-  bc: number
-): { label: string; color: string } {
-  if (price > tc) {
-    const pct = ((price - tc) / tc) * 100;
-    return { label: `+${pct.toFixed(2)}% above TC`, color: "text-green-400" };
-  }
-  if (price < bc) {
-    const pct = ((bc - price) / bc) * 100;
-    return { label: `−${pct.toFixed(2)}% below BC`, color: "text-destructive" };
-  }
-  return { label: "Inside CPR", color: "text-yellow-500" };
-}
-
-/**
- * ADK-style S/R Ladder.
- *
- * Shows all CPR levels in the same order as "CPR by Ask Dinesh Kumar (ADK)":
- *   R4, R3, R2, PH (Previous High), R1, TC, Pivot, BC, PL (Previous Low), S1, S2, S3, S4
- *
- * The live price row is inserted at the correct position in the ladder.
- */
-function SRLadder({
-  cpr,
-  currentPrice,
-  label,
-}: {
-  cpr: CPRLevels;
-  currentPrice: number;
-  label: string;
-}) {
-  const levels = [
-    { key: "R4",    value: cpr.r4 },
-    { key: "R3",    value: cpr.r3 },
-    { key: "R2",    value: cpr.r2 },
-    { key: "PH",    value: cpr.prevHigh },
-    { key: "R1",    value: cpr.r1 },
-    { key: "TC",    value: cpr.tc },
-    { key: "Pivot", value: cpr.pivot },
-    { key: "BC",    value: cpr.bc },
-    { key: "PL",    value: cpr.prevLow },
-    { key: "S1",    value: cpr.s1 },
-    { key: "S2",    value: cpr.s2 },
-    { key: "S3",    value: cpr.s3 },
-    { key: "S4",    value: cpr.s4 },
-  ].sort((a, b) => b.value - a.value);
-
-  type Row =
-    | { type: "level"; key: string; value: number }
-    | { type: "price" };
-
-  const rows: Row[] = [];
-  let priceInserted = false;
-  for (const lvl of levels) {
-    if (!priceInserted && currentPrice > lvl.value) {
-      rows.push({ type: "price" });
-      priceInserted = true;
-    }
-    rows.push({ type: "level", key: lvl.key, value: lvl.value });
-  }
-  if (!priceInserted) rows.push({ type: "price" });
-
-  const rowColor = (key: string) => {
-    if (key === "TC" || key === "BC" || key === "Pivot")
-      return "text-yellow-500 font-semibold bg-yellow-500/5";
-    if (key === "PH" || key === "PL")
-      return "text-orange-400 font-medium bg-orange-500/5";
-    if (key.startsWith("R")) return "text-red-400";
-    return "text-green-400";
-  };
-
-  return (
-    <div className="min-w-[170px]">
-      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-        {label}
-      </p>
-      {rows.map((row, i) =>
-        row.type === "price" ? (
-          <div
-            key={`price-${i}`}
-            className="flex justify-between bg-blue-500 text-white text-xs px-2 py-1 rounded font-bold my-0.5"
-          >
-            <span>▶ Price</span>
-            <span className="font-mono">{fmt(currentPrice)}</span>
-          </div>
-        ) : (
-          <div
-            key={row.key}
-            className={`flex justify-between text-xs px-2 py-0.5 rounded ${rowColor(row.key)}`}
-          >
-            <span className="w-14 shrink-0">{row.key}</span>
-            <span className="font-mono">{fmt(row.value)}</span>
-          </div>
-        )
-      )}
-    </div>
-  );
-}
-
-// AFTER
 export default function Screener({ activePattern = "littleabove", scanKey = 0 }: { activePattern?: string; scanKey?: number }) {
   const [status, setStatus] = useState<"idle" | "scanning" | "done" | "error">("idle");
   const [progress, setProgress] = useState({ done: 0, total: 0, symbol: "" });
