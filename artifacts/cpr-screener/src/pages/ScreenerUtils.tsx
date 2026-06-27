@@ -84,6 +84,8 @@ export function passesPattern(r: CPRResult, pattern: string): boolean {
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
     case "outside-cpr":
       return r.todayCPR.tc > r.prevCPR.tc && r.todayCPR.bc < r.prevCPR.bc;
+    case "outside-cpr-compressed":
+      return r.todayCPR.tc > r.prevCPR.tc && r.todayCPR.bc < r.prevCPR.bc && r.todayCPR.r4 < r.prevCPR.r4 && r.todayCPR.s4 > r.prevCPR.s4;
     case "overlapping-higher":
       return r.overlapHigher;
     case  "LAT-PU12CU23":

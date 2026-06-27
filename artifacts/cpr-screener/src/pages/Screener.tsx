@@ -276,10 +276,10 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     }
     if (showOutsideCPRCompressed && activePattern === "outside-cpr") {
       const binanceIntersect = allResults
-        .filter((r) => passesPattern(r, "outside-cpr") && r.todayCPR.r4 < r.prevCPR.r4 && r.todayCPR.s4 > r.prevCPR.s4)
+        .filter((r) => passesPattern(r, "outside-cpr-compressed"))
         .map((r) => ({ ...r, source: "binance" as const }));
       const deltaIntersect = deltaAllResults
-        .filter((r) => passesPattern(r, "outside-cpr") && r.todayCPR.r4 < r.prevCPR.r4 && r.todayCPR.s4 > r.prevCPR.s4)
+        .filter((r) => passesPattern(r, "outside-cpr-compressed"))
         .map((r) => ({ ...r, source: "delta" as const }));
       if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
       if (activeTab === "delta") return deltaIntersect;
