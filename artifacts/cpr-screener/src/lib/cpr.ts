@@ -84,15 +84,15 @@ function isValidCandle(c: OHLC): boolean {
  *
  * Resistance (R1–R4):
  *   R1 = 2P − L
- *   R2 = P  + (H − L)
- *   R3 = H  + 2 × (P − L)
- *   R4 = H  + 3 × (P − L)
+ *   R2 = P + (H − L)
+ *   R3 = H + 2 × (P − L)
+ *   R4 = R3 + R2 − R1
  *
  * Support (S1–S4):
  *   S1 = 2P − H
- *   S2 = P  − (H − L)
- *   S3 = L  − 2 × (H − P)
- *   S4 = L  − 3 × (H − P)
+ *   S2 = P − (H − L)
+ *   S3 = L − 2 × (H − P)
+ *   S4 = S3 + S2 − S1
  *
  * prevHigh / prevLow are stored so the S/R ladder can display them
  * exactly as ADK shows "PH" and "PL" lines on the chart.

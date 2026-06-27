@@ -252,6 +252,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [showLABothTiny, setShowLABothTiny] = useState(false);
+  const [showLAAllUp, setShowLAAllUp] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -434,7 +435,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   useEffect(() => {
     if (allResults.length > 0) setFiltered(allResults.filter((r) => passesPattern(r, activePattern)));
     if (deltaAllResults.length > 0) setDeltaFiltered(deltaAllResults.filter((r) => passesPattern(r, activePattern)));
-    if (activePattern !== "littleabove") setShowLABothTiny(false);
+    if (activePattern !== "littleabove") { setShowLABothTiny(false); setShowLAAllUp(false); }
   }, [activePattern, allResults, deltaAllResults]);
 
   const toggleSort = (key: SortKey) => {
@@ -458,6 +459,13 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     if (showLABothTiny && activePattern === "littleabove") {
       const binanceIntersect = allResults.filter((r) => passesPattern(r, "la-2tiny")).map((r) => ({ ...r, source: "binance" as const }));
       const deltaIntersect = deltaAllResults.filter((r) => passesPattern(r, "la-2tiny")).map((r) => ({ ...r, source: "delta" as const }));
+      if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
+      if (activeTab === "delta") return deltaIntersect;
+      return binanceIntersect;
+    }
+    if (showLAAllUp && activePattern === "littleabove") {
+      const binanceIntersect = allResults.filter((r) => passesPattern(r, "la-allstepup")).map((r) => ({ ...r, source: "binance" as const }));
+      const deltaIntersect = deltaAllResults.filter((r) => passesPattern(r, "la-allstepup")).map((r) => ({ ...r, source: "delta" as const }));
       if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
       if (activeTab === "delta") return deltaIntersect;
       return binanceIntersect;
@@ -640,24 +648,27 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             <span className="text-xs text-muted-foreground">
               {showAll
                 ? currentAllCount
-                : showLABothTiny && activePattern === "littleabove"
+                : (showLABothTiny || showLAAllUp) && activePattern === "littleabove"
                 ? displayed.length
                 : currentFilteredCount}{" "}
               results
-              {!showAll && !showLABothTiny && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
+              {!showAll && !showLABothTiny && !showLAAllUp && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
               {showLABothTiny && activePattern === "littleabove" && (
                 <span className="ml-1 text-blue-400">(LA-BothTiny intersection)</span>
               )}
+              {showLAAllUp && activePattern === "littleabove" && (
+                <span className="ml-1 text-blue-400">(LA-AllUp intersection)</span>
+              )}
             </span>
             <button
-              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); }}
+              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); setShowLAAllUp(false); }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               {showAll ? "Show filtered only" : "Show all"}
             </button>
             {activePattern === "littleabove" && !showAll && (
               <button
-                onClick={() => setShowLABothTiny((v) => !v)}
+                onClick={() => { setShowLABothTiny((v) => !v); setShowLAAllUp(false); }}
                 className={`text-xs px-2.5 py-1 rounded border transition-colors ${
                   showLABothTiny
                     ? "border-foreground text-foreground"
@@ -666,6 +677,19 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 title="Show symbols that match BOTH Structure LittleAbove AND TinyAbove-Both Tiny"
               >
                 {showLABothTiny ? "✕ LA-BothTiny" : "LA-BothTiny"}
+              </button>
+            )}
+            {activePattern === "littleabove" && !showAll && (
+              <button
+                onClick={() => { setShowLAAllUp((v) => !v); setShowLABothTiny(false); }}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  showLAAllUp
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Show symbols that match BOTH Structure LittleAbove AND LittleAbove-Ladder (all R/S levels stepped up)"
+              >
+                {showLAAllUp ? "✕ LA-AllUp" : "LA-AllUp"}
               </button>
             )}
           </div>
