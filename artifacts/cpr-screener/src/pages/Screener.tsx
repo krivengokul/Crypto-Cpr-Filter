@@ -507,16 +507,16 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <span className="ml-1 text-blue-400">(LA-AllUp intersection)</span>
               )}
               {showLAPL12CL23 && activePattern === "littleabove" && (
-                <span className="ml-1 text-blue-400">(PL12CL23 filter)</span>
+                <span className="ml-1 text-blue-400">(PL12CL23)</span>
               )}
               {showOutsideCPRCompressed && activePattern === "outside-cpr" && (
-                <span className="ml-1 text-purple-400">(Compressed filter)</span>
+                <span className="ml-1 text-purple-400">(Compressed)</span>
               )}
               {showInsideCPRExpanded && activePattern === "inside-cpr" && (
-                <span className="ml-1 text-orange-400">(Expanded filter)</span>
+                <span className="ml-1 text-orange-400">(Expanded)</span>
               )}
               {showBigBelowPMiniPL3 && activePattern === "structure-bigbelow" && (
-                <span className="ml-1 text-cyan-400">(pMini-pl3&gt;3u3&gt;3 filter)</span>
+                <span className="ml-1 text-cyan-400">(pMini-PL34C4/PU3&gt;U4)</span>
               )}
             </span>
             <button
@@ -598,7 +598,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     ? "border-cyan-400 text-cyan-400"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
-                title="Compressed, Mini PCPR, PL34CL34, Prev U3 above U4: Target-APU4"
+                title="Compressed, Mini PCPR, PL34CL4, Prev U3 above U4: Target-APU4"
               >
                 {showBigBelowPMiniPL3 ? "✕ pMini-L34C4/U3>4" : "pMini-L34C4/U3>4"}
               </button>
