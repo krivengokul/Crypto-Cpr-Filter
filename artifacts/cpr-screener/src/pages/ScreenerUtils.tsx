@@ -120,6 +120,8 @@ export function passesPattern(r: CPRResult, pattern: string): boolean {
       return (r.currentPrice < r.todayCPR.prevLow);
     case "structure-bigabove":
       return r.cprRising && r.strWideCPR;
+    case "bigabove-pl34cl4-u3>pu4":
+      return r.cprRising && r.strWideCPR && r.PL34CL4 && r.todayCPR.r3 > r.prevCPR.r4;
     case "HA-U1>PU4":
       return (r.cprRising && r.strWideCPR && r.todayCPR.r1 > r.prevCPR.r4);
     case "HAThin-U1>PU4":

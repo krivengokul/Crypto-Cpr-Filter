@@ -51,6 +51,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [showOutsideCPRCompressed, setShowOutsideCPRCompressed] = useState(false);
   const [showInsideCPRExpanded, setShowInsideCPRExpanded] = useState(false);
   const [showBigBelowPMiniPL3, setShowBigBelowPMiniPL3] = useState(false);
+  const [showBigAbovePL34CL4, setShowBigAbovePL34CL4] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -237,6 +238,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     if (activePattern !== "outside-cpr") { setShowOutsideCPRCompressed(false); }
     if (activePattern !== "inside-cpr") { setShowInsideCPRExpanded(false); }
     if (activePattern !== "structure-bigbelow") { setShowBigBelowPMiniPL3(false); }
+    if (activePattern !== "structure-bigabove") { setShowBigAbovePL34CL4(false); }
   }, [activePattern, allResults, deltaAllResults]);
 
   const toggleSort = (key: SortKey) => {
@@ -306,6 +308,17 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
         .map((r) => ({ ...r, source: "binance" as const }));
       const deltaIntersect = deltaAllResults
         .filter((r) => passesPattern(r, "bigbelow-pmini-pl3"))
+        .map((r) => ({ ...r, source: "delta" as const }));
+      if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
+      if (activeTab === "delta") return deltaIntersect;
+      return binanceIntersect;
+    }
+    if (showBigAbovePL34CL4 && activePattern === "structure-bigabove") {
+      const binanceIntersect = allResults
+        .filter((r) => passesPattern(r, "bigabove-pl34cl4-u3>pu4"))
+        .map((r) => ({ ...r, source: "binance" as const }));
+      const deltaIntersect = deltaAllResults
+        .filter((r) => passesPattern(r, "bigabove-pl34cl4-u3>pu4"))
         .map((r) => ({ ...r, source: "delta" as const }));
       if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
       if (activeTab === "delta") return deltaIntersect;
@@ -497,9 +510,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 ? displayed.length
                 : showBigBelowPMiniPL3 && activePattern === "structure-bigbelow"
                 ? displayed.length
+                : showBigAbovePL34CL4 && activePattern === "structure-bigabove"
+                ? displayed.length
                 : currentFilteredCount}{" "}
               results
-              {!showAll && !showLABothTiny && !showLAAllUp && !showLAPL12CL23 && !showOutsideCPRCompressed && !showInsideCPRExpanded && !showBigBelowPMiniPL3 && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
+              {!showAll && !showLABothTiny && !showLAAllUp && !showLAPL12CL23 && !showOutsideCPRCompressed && !showInsideCPRExpanded && !showBigBelowPMiniPL3 && !showBigAbovePL34CL4 && ` (${currentFilteredCount} matching, ${currentAllCount} total)`}
               {showLABothTiny && activePattern === "littleabove" && (
                 <span className="ml-1 text-blue-400">(LA-BothTiny intersection)</span>
               )}
@@ -518,9 +533,12 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
               {showBigBelowPMiniPL3 && activePattern === "structure-bigbelow" && (
                 <span className="ml-1 text-cyan-400">(pMini-PL34C4/PU3&gt;U4)</span>
               )}
+              {showBigAbovePL34CL4 && activePattern === "structure-bigabove" && (
+                <span className="ml-1 text-emerald-400">(PL34CL4/U3&gt;PU4)</span>
+              )}
             </span>
             <button
-              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); setShowLAAllUp(false); setShowLAPL12CL23(false); setShowOutsideCPRCompressed(false); setShowInsideCPRExpanded(false); setShowBigBelowPMiniPL3(false); }}
+              onClick={() => { setShowAll((v) => !v); setShowLABothTiny(false); setShowLAAllUp(false); setShowLAPL12CL23(false); setShowOutsideCPRCompressed(false); setShowInsideCPRExpanded(false); setShowBigBelowPMiniPL3(false); setShowBigAbovePL34CL4(false); }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               {showAll ? "Show filtered only" : "Show all"}
@@ -601,6 +619,19 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 title="Compressed, Mini PCPR, PL34CL4, Prev U3 above U4: Target-APU4"
               >
                 {showBigBelowPMiniPL3 ? "✕ pMini-L34C4/U3>4" : "pMini-L34C4/U3>4"}
+              </button>
+            )}
+            {activePattern === "structure-bigabove" && !showAll && (
+              <button
+                onClick={() => setShowBigAbovePL34CL4((v) => !v)}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  showBigAbovePL34CL4
+                    ? "border-foreground text-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="BigAbove: PL34CL4 AND today R3 above prev R4"
+              >
+                {showBigAbovePL34CL4 ? "✕ PL34CL4/U3>PU4" : "PL34CL4/U3>PU4"}
               </button>
             )}
           </div>
