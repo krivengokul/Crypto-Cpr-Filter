@@ -66,12 +66,14 @@ const PERP_ONLY_ON_TV = new Set([
 ]);
 
 export function getChartUrl(symbol: string, source: "binance" | "delta"): string {
-  const tvSymbol =
-    source === "delta" && symbol.endsWith("USD") && !symbol.endsWith("USDT")
-      ? symbol.slice(0, -3) + "USDT"
-      : symbol;
-  const suffix = PERP_ONLY_ON_TV.has(tvSymbol) ? ".P" : "";
-  return `https://www.tradingview.com/chart/?symbol=BINANCE:${tvSymbol}${suffix}`;
+  if (source === "delta") {
+    // Delta Exchange India symbols on TradingView: DELTAIN: prefix, in.tradingview.com, .p suffix
+    // e.g. AAPLXUSD → https://in.tradingview.com/chart/?symbol=DELTAIN:AAPLXUSD.p
+    return `https://in.tradingview.com/chart/?symbol=DELTAIN:${symbol}.p`;
+  }
+  // Binance — default no suffix, .P only for known perp-only symbols
+  const suffix = PERP_ONLY_ON_TV.has(symbol) ? ".P" : "";
+  return `https://www.tradingview.com/chart/?symbol=BINANCE:${symbol}${suffix}`;
 }
 
 export function passesPattern(r: CPRResult, pattern: string): boolean {
