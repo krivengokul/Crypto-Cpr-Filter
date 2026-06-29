@@ -838,38 +838,38 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                             <td colSpan={20} className="px-6 py-4">
                               <div className="flex flex-wrap gap-10 items-start">
                                 {/* Prev Day CPR box */}
-                                <div className="min-w-[130px]">
+                                <div className="min-w-[140px]">
                                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Prev Day CPR</p>
-                                  <div className="rounded-lg border border-border bg-card/60 px-3 py-2 font-mono text-xs space-y-1">
-                                    <div className="flex justify-between gap-4">
-                                      <span className="text-muted-foreground">TC</span>
-                                      <span className="text-yellow-500 font-semibold">{fmt(r.prevCPR.tc)}</span>
+                                  <div className="rounded-lg border border-border bg-card/60 px-3 py-2 font-mono space-y-1.5">
+                                    <div className="flex justify-between gap-4 text-xs">
+                                      <span style={{ color: "#6b7280" }}>TC:</span>
+                                      <span style={{ color: "#9ca3af" }}>{fmt(r.prevCPR.tc)}</span>
                                     </div>
                                     <div className="flex justify-between gap-4">
-                                      <span className="text-muted-foreground">Pivot</span>
-                                      <span className="text-yellow-500 font-bold">{fmt(r.prevCPR.pivot)}</span>
+                                      <span className="text-xs" style={{ color: "#6b7280" }}>Pivot</span>
+                                      <span className="font-bold text-sm" style={{ color: "#d1d5db" }}>{fmt(r.prevCPR.pivot)}</span>
                                     </div>
-                                    <div className="flex justify-between gap-4">
-                                      <span className="text-muted-foreground">BC</span>
-                                      <span className="text-yellow-500 font-semibold">{fmt(r.prevCPR.bc)}</span>
+                                    <div className="flex justify-between gap-4 text-xs">
+                                      <span style={{ color: "#6b7280" }}>BC:</span>
+                                      <span style={{ color: "#9ca3af" }}>{fmt(r.prevCPR.bc)}</span>
                                     </div>
                                   </div>
                                 </div>
                                 {/* Today CPR box */}
-                                <div className="min-w-[130px]">
+                                <div className="min-w-[140px]">
                                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Today CPR</p>
-                                  <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 font-mono text-xs space-y-1">
-                                    <div className="flex justify-between gap-4">
-                                      <span className="text-muted-foreground">TC</span>
-                                      <span className="text-yellow-500 font-semibold">{fmt(r.todayCPR.tc)}</span>
+                                  <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 font-mono space-y-1.5">
+                                    <div className="flex justify-between gap-4 text-xs">
+                                      <span style={{ color: "#6b7280" }}>TC:</span>
+                                      <span style={{ color: "#9ca3af" }}>{fmt(r.todayCPR.tc)}</span>
                                     </div>
                                     <div className="flex justify-between gap-4">
-                                      <span className="text-muted-foreground">Pivot</span>
-                                      <span className="text-yellow-500 font-bold">{fmt(r.todayCPR.pivot)}</span>
+                                      <span className="text-xs" style={{ color: "#6b7280" }}>Pivot</span>
+                                      <span className="font-bold text-sm" style={{ color: "#ffffff" }}>{fmt(r.todayCPR.pivot)}</span>
                                     </div>
-                                    <div className="flex justify-between gap-4">
-                                      <span className="text-muted-foreground">BC</span>
-                                      <span className="text-yellow-500 font-semibold">{fmt(r.todayCPR.bc)}</span>
+                                    <div className="flex justify-between gap-4 text-xs">
+                                      <span style={{ color: "#6b7280" }}>BC:</span>
+                                      <span style={{ color: "#9ca3af" }}>{fmt(r.todayCPR.bc)}</span>
                                     </div>
                                   </div>
                                 </div>
