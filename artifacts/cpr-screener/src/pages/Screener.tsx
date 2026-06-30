@@ -774,8 +774,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     >
                       Price <SortIcon k="change24h" />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Price vs CPR
+                    <th
+                      className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
+                      onClick={() => toggleSort("priceVsCpr")}
+                    >
+                      Price vs CPR <SortIcon k="priceVsCpr" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Signals

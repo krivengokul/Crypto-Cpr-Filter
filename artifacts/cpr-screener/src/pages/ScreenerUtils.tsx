@@ -1,6 +1,6 @@
 import type { CPRLevels, CPRResult } from "@/lib/cpr";
 
-export type SortKey = "symbol" | "compressionRatio" | "currentPrice" | "change24h" | "quoteVolume";
+export type SortKey = "symbol" | "compressionRatio" | "currentPrice" | "change24h" | "quoteVolume" | "priceVsCpr";
 export type SortDir = "asc" | "desc";
 export type ActiveTab = "binance" | "delta" | "combined";
 
@@ -27,6 +27,14 @@ export function fmtVol(v: number): string {
   return `$${v.toFixed(0)}`;
 }
 
+export function priceVsCprValue(r: CPRResultWithSource): number {
+  const { currentPrice: price, todayCPR } = r;
+  const { tc, bc } = todayCPR;
+  if (price > tc) return ((price - tc) / tc) * 100;
+  if (price < bc) return -((bc - price) / bc) * 100;
+  return 0;
+}
+
 export function getVal(r: CPRResultWithSource, key: SortKey): number | string {
   switch (key) {
     case "symbol":          return r.symbol;
@@ -34,6 +42,7 @@ export function getVal(r: CPRResultWithSource, key: SortKey): number | string {
     case "currentPrice":    return r.currentPrice;
     case "change24h":       return r.change24h;
     case "quoteVolume":     return r.quoteVolume;
+    case "priceVsCpr":      return priceVsCprValue(r);
   }
 }
 
