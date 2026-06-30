@@ -33,6 +33,8 @@ import {
   getChartUrl,
   passesPattern,
   distanceFromCPR,
+  getPivotLevel,
+  type PivotLevelInfo,
   SRLadder,
 } from "./ScreenerUtils";
 
@@ -55,6 +57,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [showBigAbovePL34CL4, setShowBigAbovePL34CL4] = useState(false);
   // NEW: LB Compressed filter state
   const [showLBCmprss, setShowLBCmprss] = useState(false);
+  const [pivotLevelFilter, setPivotLevelFilter] = useState<PivotLevelInfo["label"] | null>(null);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -355,6 +358,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
 
   const displayed = getActivePool()
     .filter((r) => r.symbol.toLowerCase().includes(search.toLowerCase()))
+    .filter((r) => !pivotLevelFilter || getPivotLevel(r)?.label === pivotLevelFilter)
     .slice()
     .sort((a, b) => {
       const av = getVal(a, sortKey);
@@ -395,7 +399,8 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const anySubFilter =
     showLABothTiny || showLAAllUp || showLAPL12CL23 || showLAExpando ||
     showOutsideCPRCompressed || showInsideCPRExpanded ||
-    showBigBelowPMiniPL3 || showBigAbovePL34CL4 || showLBCmprss;
+    showBigBelowPMiniPL3 || showBigAbovePL34CL4 || showLBCmprss ||
+    !!pivotLevelFilter;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -564,6 +569,9 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
               {showLBCmprss && activePattern === "littlebelow" && (
                 <span className="ml-1 text-violet-400">(LB-Compressed: L4&gt;PL3/U4&lt;PU2)</span>
               )}
+              {pivotLevelFilter && (
+                <span className="ml-1 text-foreground">(Pivot Level: {pivotLevelFilter})</span>
+              )}
             </span>
 
             {/* Show All button */}
@@ -579,11 +587,40 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 setShowBigBelowPMiniPL3(false);
                 setShowBigAbovePL34CL4(false);
                 setShowLBCmprss(false);
+                setPivotLevelFilter(null);
               }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
               {showAll ? "Show filtered only" : "Show all"}
             </button>
+
+            {/* Pivot Level filter buttons — independent of activePattern, mutually exclusive */}
+            {!showAll && (
+              <div className="flex items-center gap-1.5 pl-2 ml-1 border-l border-border">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mr-0.5">Pivot Level:</span>
+                {(
+                  [
+                    { label: "Expanded", active: "border-purple-400 text-purple-400" },
+                    { label: "Compressed", active: "border-cyan-400 text-cyan-400" },
+                    { label: "Higher", active: "border-green-400 text-green-400" },
+                    { label: "Lower", active: "border-destructive text-destructive" },
+                  ] as { label: PivotLevelInfo["label"]; active: string }[]
+                ).map(({ label, active }) => (
+                  <button
+                    key={label}
+                    onClick={() => setPivotLevelFilter((v) => (v === label ? null : label))}
+                    className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                      pivotLevelFilter === label
+                        ? active
+                        : "border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                    title={`Show only rows where Pivot Level = ${label}`}
+                  >
+                    {pivotLevelFilter === label ? `✕ ${label}` : label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* NEW: lb-Cmprss-L4>3/U4<2 button — only shown on littlebelow, mirrors Show All style */}
             {activePattern === "littlebelow" && !showAll && (
@@ -742,6 +779,9 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                       Signals
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Pivot Level
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Chart
                     </th>
                   </tr>
@@ -843,6 +883,18 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Skip</span>
                               )}
                             </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            {(() => {
+                              const pl = getPivotLevel(r);
+                              return pl ? (
+                                <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${pl.classes}`}>
+                                  {pl.label}
+                                </span>
+                              ) : (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">—</span>
+                              );
+                            })()}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <a

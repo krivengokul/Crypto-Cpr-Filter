@@ -162,6 +162,39 @@ export function passesPattern(r: CPRResult, pattern: string): boolean {
   }
 }
 
+/**
+ * Pivot Level — compares today's R4/S4 to previous day's R4/S4 to classify
+ * how today's CPR range sits relative to yesterday's:
+ *   Expanded:   today R4 > prev R4  AND today S4 < prev S4  (range widened both sides)
+ *   Compressed: today R4 < prev R4  AND today S4 > prev S4  (range narrowed both sides)
+ *   Higher:     today R4 > prev R4  AND today S4 > prev S4  (range shifted up)
+ *   Lower:      today R4 < prev R4  AND today S4 < prev S4  (range shifted down)
+ * These four cases are mutually exclusive and exhaustive (modulo exact ties).
+ */
+export interface PivotLevelInfo {
+  label: "Expanded" | "Compressed" | "Higher" | "Lower";
+  classes: string;
+}
+
+export function getPivotLevel(r: CPRResult): PivotLevelInfo | null {
+  const { r4: tR4, s4: tS4 } = r.todayCPR;
+  const { r4: pR4, s4: pS4 } = r.prevCPR;
+
+  if (tR4 > pR4 && tS4 < pS4) {
+    return { label: "Expanded", classes: "bg-purple-500/10 text-purple-400 border-purple-500/20" };
+  }
+  if (tR4 < pR4 && tS4 > pS4) {
+    return { label: "Compressed", classes: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" };
+  }
+  if (tR4 > pR4 && tS4 > pS4) {
+    return { label: "Higher", classes: "bg-green-500/10 text-green-400 border-green-500/20" };
+  }
+  if (tR4 < pR4 && tS4 < pS4) {
+    return { label: "Lower", classes: "bg-destructive/10 text-destructive border-destructive/20" };
+  }
+  return null;
+}
+
 export function distanceFromCPR(
   price: number,
   tc: number,
