@@ -123,6 +123,15 @@ export function passesPattern(r: CPRResult, pattern: string): boolean {
         (r.todayCPR.s4 > r.prevCPR.s3 && r.todayCPR.s4 < r.prevCPR.s2) &&
         (r.todayCPR.r4 < r.prevCPR.r2 && r.todayCPR.r4 > r.prevCPR.r1)
       );
+    // NEW: LB-C-L34C4/U23C4 — LittleBelow + PL34CL4 + today R4 between prev R2 and R3
+    case "lb-c-l34c4/u23c4":
+      return (
+        r.cprFalling &&
+        r.narrowCPR &&
+        r.PL34CL4 &&
+        r.todayCPR.r4 > r.prevCPR.r2 &&
+        r.todayCPR.r4 < r.prevCPR.r3
+      );
     case "inside-cpr":
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
     case "inside-cpr-expanded":
