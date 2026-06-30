@@ -764,12 +764,6 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     </th>
                     <th
                       className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
-                      onClick={() => toggleSort("compressionRatio")}
-                    >
-                      Compression <SortIcon k="compressionRatio" />
-                    </th>
-                    <th
-                      className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
                       onClick={() => toggleSort("change24h")}
                     >
                       Price <SortIcon k="change24h" />
@@ -782,6 +776,12 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Signals
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
+                      onClick={() => toggleSort("compressionRatio")}
+                    >
+                      Compression <SortIcon k="compressionRatio" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Pivot Level
@@ -828,6 +828,27 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                             </div>
                           </td>
                           <td className="px-4 py-3 font-mono whitespace-nowrap">
+                            <div className="text-xs font-semibold text-foreground">Price: {fmt(r.currentPrice)}</div>
+                            <div className={`text-xs font-semibold py-0.5 ${r.change24h >= 0 ? "text-green-400" : "text-destructive"}`}>
+                              {fmtPct(r.change24h)}
+                              <div className="w-full bg-muted rounded-full h-1 mt-0.5 max-w-[64px]">
+                                <div
+                                  className={`h-1 rounded-full transition-all ${r.change24h >= 0 ? "bg-green-400" : "bg-destructive"}`}
+                                  style={{ width: `${Math.min(Math.abs(r.change24h) * 5, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">OPrice: {fmt(r.openPrice)}</div>
+                          </td>
+                          <td className={`px-4 py-3 whitespace-nowrap text-xs font-medium ${distanceFromCPR(r.currentPrice, r.todayCPR.tc, r.todayCPR.bc).color}`}>
+                            {distanceFromCPR(r.currentPrice, r.todayCPR.tc, r.todayCPR.bc).label}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex flex-wrap gap-1">
+                              {/* Signals column intentionally left empty — to be repurposed for a different calculation */}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 font-mono whitespace-nowrap">
                             <div className="text-xs text-chart-3">
                               <span className="text-muted-foreground">TDay: </span>{r.todayCPR.widthPct.toFixed(4)}%
                             </div>
@@ -854,27 +875,6 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                               <span className="text-muted-foreground">PDay: </span>{r.prevCPR.widthPct.toFixed(4)}%
                             </div>
                           </td>
-                          <td className="px-4 py-3 font-mono whitespace-nowrap">
-                            <div className="text-xs font-semibold text-foreground">Price: {fmt(r.currentPrice)}</div>
-                            <div className={`text-xs font-semibold py-0.5 ${r.change24h >= 0 ? "text-green-400" : "text-destructive"}`}>
-                              {fmtPct(r.change24h)}
-                              <div className="w-full bg-muted rounded-full h-1 mt-0.5 max-w-[64px]">
-                                <div
-                                  className={`h-1 rounded-full transition-all ${r.change24h >= 0 ? "bg-green-400" : "bg-destructive"}`}
-                                  style={{ width: `${Math.min(Math.abs(r.change24h) * 5, 100)}%` }}
-                                />
-                              </div>
-                            </div>
-                            <div className="text-xs text-muted-foreground">OPrice: {fmt(r.openPrice)}</div>
-                          </td>
-                          <td className={`px-4 py-3 whitespace-nowrap text-xs font-medium ${distanceFromCPR(r.currentPrice, r.todayCPR.tc, r.todayCPR.bc).color}`}>
-                            {distanceFromCPR(r.currentPrice, r.todayCPR.tc, r.todayCPR.bc).label}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex flex-wrap gap-1">
-                              {/* Signals column intentionally left empty — to be repurposed for a different calculation */}
-                            </div>
-                          </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
                               {r.cprRising && (
@@ -892,6 +892,8 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                               {!r.cprRising && !r.cprNarrowing && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Skip</span>
                               )}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-1">
                               {(() => {
                                 const pl = getPivotLevel(r);
                                 return pl ? (
