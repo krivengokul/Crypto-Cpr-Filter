@@ -483,11 +483,8 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             ) : activePattern === "inside-value" ? (
               <>Filters where <span className="text-foreground font-medium">today&apos;s CPR is fully inside yesterday&apos;s CPR</span> — compression with breakout potential.</>
             ) : activePattern === "littlebelow" ? (
-              <span className="inline-flex items-center gap-2 flex-wrap">
-                <span>Screens where today&apos;s CPR is below yesterday&apos;s and width is smaller than yesterday&apos;s CPR.</span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-orange-500 text-white">Below</span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white">Narrow</span>
-              </span>
+              <>Screens where today&apos;s CPR is below yesterday&apos;s and width is smaller than yesterday&apos;s CPR.</>
+
             ) : (
               <>Filters where <span className="text-foreground font-medium">today&apos;s BC is above yesterday&apos;s TC</span> and <span className="text-foreground font-medium">CPR width is less than 50% of yesterday&apos;s</span>.</>
             )}
@@ -515,7 +512,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             ) : activePattern === "littlebelow" ? (
               <>
                 <div className="text-xs font-semibold text-primary mb-1">LittleCPR Below</div>
-                <div className="text-xs text-muted-foreground">Narrow CPR Below PCPR — today&apos;s CPR is narrower than yesterday&apos;s and present below it</div>
+                <div className="text-xs text-muted-foreground mb-2">Narrow CPR Below PCPR — today&apos;s CPR is narrower than yesterday&apos;s and present below it</div>
+                <div className="flex gap-1.5">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-500 text-white">Below</span>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white">Narrow</span>
+                </div>
               </>
             ) : (
               <>
