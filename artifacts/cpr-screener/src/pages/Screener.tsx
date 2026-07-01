@@ -487,7 +487,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             ) : activePattern === "littlebelow" ? (
               <>Screens where today&apos;s CPR is below yesterday&apos;s and width is smaller than yesterday&apos;s CPR.</>
             ) : (
-              <>Filters where <span className="text-foreground font-medium">today&apos;s BC is above yesterday&apos;s TC</span> and <span className="text-foreground font-medium">CPR width is less than 50% of yesterday&apos;s</span>.</>
+              <>Screens where <span className="text-foreground font-medium">today&apos;s CPR is above yesterday&apos;s</span> and <span className="text-foreground font-medium">width is smaller than yesterday&apos;s CPR</span>.</>
             )}
           </p>
         </div>
@@ -508,11 +508,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             ) : activePattern === "littleabove" ? (
               <>
                 <div className="text-xs font-semibold text-primary mb-1">LittleCPR Above</div>
-                <div className="text-xs text-muted-foreground mb-2">Narrow CPR Above PCPR — today&apos;s CPR is narrower than yesterday&apos;s and present above it</div>
-                <div className="flex gap-1.5">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500 text-white">Above</span>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500 text-white">Narrow</span>
-                </div>
+                <div className="text-xs text-muted-foreground">Narrow CPR Above PCPR — today&apos;s CPR is narrower than yesterday&apos;s and present above it</div>
               </>
             ) : activePattern === "littlebelow" ? (
               <>
@@ -1115,7 +1111,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
-                              {r.cprRising && (
+                              {r.cprRising && activePattern !== "littleabove" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">Above</span>
                               )}
                               {r.cprFalling && activePattern !== "littlebelow" && (
@@ -1124,7 +1120,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                               {passesPattern(r, "inside-value") && activePattern === "inside-value" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">Inside</span>
                               )}
-                              {r.narrowCPR && activePattern !== "littlebelow" && (
+                              {r.narrowCPR && activePattern !== "littlebelow" && activePattern !== "littleabove" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-chart-3/10 text-chart-3 border border-chart-3/20 font-medium">Narrow</span>
                               )}
                               {!r.cprRising && !(r.cprFalling && activePattern !== "littlebelow") && !r.narrowCPR && (
