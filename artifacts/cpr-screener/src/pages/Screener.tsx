@@ -34,6 +34,7 @@ import {
   passesPattern,
   distanceFromCPR,
   cprDistancePct,
+  levelsInDistanceRange,
   getPivotLevel,
   type PivotLevelInfo,
   SRLadder,
@@ -1013,7 +1014,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                       className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
                       onClick={() => toggleSort("cprDistance")}
                     >
-                      Distance % <SortIcon k="cprDistance" />
+                      DIST <SortIcon k="cprDistance" />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Signals
@@ -1088,10 +1089,18 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                             {(() => {
                               const dist = cprDistancePct(r);
                               if (dist === null) return <span className="text-muted-foreground">—</span>;
+                              const levels = levelsInDistanceRange(r);
                               return (
-                                <span className={r.cprRising ? "text-blue-400" : "text-orange-400"}>
-                                  {dist.toFixed(2)}%
-                                </span>
+                                <>
+                                  <div className={r.cprRising ? "text-blue-400" : "text-orange-400"}>
+                                    {dist.toFixed(2)}%
+                                  </div>
+                                  {levels.length > 0 && (
+                                    <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-normal max-w-[140px]">
+                                      {levels.map((lvl) => lvl.label).join(", ")}
+                                    </div>
+                                  )}
+                                </>
                               );
                             })()}
                           </td>

@@ -58,6 +58,53 @@ export function cprDistancePct(r: CPRResult): number | null {
   return null;
 }
 
+export interface DistanceLevel {
+  label: string;
+  value: number;
+}
+
+/**
+ * Returns which R/S levels (today's and previous day's) fall inside the
+ * DIST gap computed by cprDistancePct — i.e. between prevCPR.tc and
+ * todayCPR.bc (CPR Above) or between todayCPR.tc and prevCPR.bc (CPR Below).
+ * Naming follows the ADK ladder convention: R1→U1, R2→U2, R3→U3, S1→L1,
+ * S2→L2, S3→L3; previous-day levels get a "P" prefix (PU1, PL1, etc).
+ * Sorted low → high. Empty when the CPR isn't clearly Above/Below.
+ */
+export function levelsInDistanceRange(r: CPRResult): DistanceLevel[] {
+  const dist = cprDistancePct(r);
+  if (dist === null) return [];
+
+  let low: number, high: number;
+  if (r.cprRising) {
+    low = r.prevCPR.tc;
+    high = r.todayCPR.bc;
+  } else {
+    low = r.todayCPR.tc;
+    high = r.prevCPR.bc;
+  }
+  if (low > high) [low, high] = [high, low];
+
+  const candidates: DistanceLevel[] = [
+    { label: "U1",  value: r.todayCPR.r1 },
+    { label: "U2",  value: r.todayCPR.r2 },
+    { label: "U3",  value: r.todayCPR.r3 },
+    { label: "L1",  value: r.todayCPR.s1 },
+    { label: "L2",  value: r.todayCPR.s2 },
+    { label: "L3",  value: r.todayCPR.s3 },
+    { label: "PU1", value: r.prevCPR.r1 },
+    { label: "PU2", value: r.prevCPR.r2 },
+    { label: "PU3", value: r.prevCPR.r3 },
+    { label: "PL1", value: r.prevCPR.s1 },
+    { label: "PL2", value: r.prevCPR.s2 },
+    { label: "PL3", value: r.prevCPR.s3 },
+  ];
+
+  return candidates
+    .filter((c) => c.value >= low && c.value <= high)
+    .sort((a, b) => a.value - b.value);
+}
+
 export function getVal(r: CPRResultWithSource, key: SortKey): number | string {
   switch (key) {
     case "symbol":          return r.symbol;
