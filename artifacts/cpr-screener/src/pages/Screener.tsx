@@ -1128,19 +1128,23 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Skip</span>
                               )}
                             </div>
+                            {(r.todayCPR.widthPct < 0.5 || r.prevCPR.widthPct < 0.5) && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {r.todayCPR.widthPct >= 0.1 && r.todayCPR.widthPct < 0.5 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 font-medium">Mini</span>
+                                )}
+                                {r.prevCPR.widthPct >= 0.1 && r.prevCPR.widthPct < 0.5 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-400/20 font-medium">pMini</span>
+                                )}
+                                {r.todayCPR.widthPct < 0.1 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">Tiny</span>
+                                )}
+                                {r.prevCPR.widthPct < 0.1 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-400/20 font-medium">pTiny</span>
+                                )}
+                              </div>
+                            )}
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {r.todayCPR.widthPct < 0.1 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">Tiny</span>
-                              )}
-                              {r.todayCPR.widthPct >= 0.1 && r.todayCPR.widthPct < 0.5 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 font-medium">Mini</span>
-                              )}
-                              {r.prevCPR.widthPct < 0.1 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-400/20 font-medium">pTiny</span>
-                              )}
-                              {r.prevCPR.widthPct >= 0.1 && r.prevCPR.widthPct < 0.5 && (
-                                <span className="text-xs px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-400/20 font-medium">pMini</span>
-                              )}
                               {(() => {
                                 const pl = getPivotLevel(r);
                                 return pl ? (
