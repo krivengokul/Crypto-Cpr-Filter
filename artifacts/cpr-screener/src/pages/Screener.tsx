@@ -74,6 +74,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   // NEW: LB-BothTiny / LB-AllUp filter state (replaces hidden left-nav items)
   const [showLBBothTiny, setShowLBBothTiny] = useState(false);
   const [showLBAllUp, setShowLBAllUp] = useState(false);
+  const [showExpr4Pr4, setShowExpr4Pr4] = useState(false);
   const [pivotLevelFilter, setPivotLevelFilter] = useState<PivotLevelInfo["label"] | null>(null);
   const [widthFilter, setWidthFilter] = useState<"mini" | "tiny" | "pmini" | "ptiny" | null>(null);
   const [error, setError] = useState("");
@@ -318,6 +319,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     if (activePattern !== "littleabove") { setShowLABothTiny(false); setShowLAAllUp(false); setShowLAPL12CL23(false); setShowLAExpando(false); }
     if (activePattern !== "outside-cpr") { setShowOutsideCPRCompressed(false); }
     if (activePattern !== "inside-cpr") { setShowInsideCPRExpanded(false); }
+    if (activePattern !== "overlapping-lower") { setShowExpr4Pr4(false); }
     if (activePattern !== "structure-bigbelow") { setShowBigBelowPMiniPL3(false); setShowBigBelowPMiniRising(false); pMiniRisingAlertedRef.current.clear(); }
     if (activePattern !== "structure-bigabove") { setShowBigAbovePL34CL4(false); setShowBAComp(false); }
     // Reset LB Compressed / LB-BothTiny / LB-AllUp when leaving littlebelow
@@ -462,6 +464,19 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
       const deltaIntersect = deltaAllResults
         .filter((r) => passesPattern(r, "lb-2tiny"))
         .map((r) => ({ ...r, source: "delta" as const }));
+      if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
+      if (activeTab === "delta") return deltaIntersect;
+      return binanceIntersect;
+    }
+    if (showExpr4Pr4 && activePattern === "overlapping-lower") {
+      const binanceIntersect = allResults
+        .filter((r) => passesPattern(r, "Exp-r4>pr4"))
+        .map((r) => ({ ...r, source: "binance" as const }));
+
+      const deltaIntersect = deltaAllResults
+        .filter((r) => passesPattern(r, "Exp-r4>pr4"))
+        .map((r) => ({ ...r, source: "delta" as const }));
+
       if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
       if (activeTab === "delta") return deltaIntersect;
       return binanceIntersect;
@@ -796,6 +811,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 setShowLBAllUp(false);
                 setPivotLevelFilter(null);
                 setWidthFilter(null);
+                setShowExpr4Pr4(false);
               }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -912,6 +928,19 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 title="LA, Expanded: Todays L4 < PDay L4 / Todays U4 > PDays L2: Bullish"
               >
                 {showLAExpando ? "✕ la-Expando" : "la-Expando"}
+              </button>
+            )}
+            {activePattern === "overlapping-lower" && !showAll && (
+              <button
+                onClick={() => setShowExpr4Pr4((v) => !v)}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  showExpr4Pr4
+                    ? "border-emerald-400 text-emerald-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Prev R4 between today's R3/R4 and Prev S4 between today's S3/S4 with today's CPR Mini"
+              >
+                {showExpr4Pr4 ? "✕ Exp-r4>pr4" : "Exp-r4>pr4"}
               </button>
             )}
             {activePattern === "outside-cpr" && !showAll && (

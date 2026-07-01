@@ -203,6 +203,16 @@ export function passesPattern(r: CPRResult, pattern: string): boolean {
         r.todayCPR.r4 > r.prevCPR.r2 &&
         r.todayCPR.r4 < r.prevCPR.r3
       );
+      case "Exp-r4>pr4":
+      return (
+        r.overlapLower &&
+        r.prevCPR.r4 > r.todayCPR.r3 &&
+        r.prevCPR.r4 < r.todayCPR.r4 &&
+        r.prevCPR.s4 > r.todayCPR.s4 &&
+        r.prevCPR.s4 < r.todayCPR.s3 &&
+        r.todayCPR.widthPct >= 0.1 &&
+        r.todayCPR.widthPct < 0.5
+      );
     case "inside-cpr":
       return r.todayCPR.tc < r.prevCPR.tc && r.todayCPR.bc > r.prevCPR.bc;
     case "inside-cpr-expanded":
