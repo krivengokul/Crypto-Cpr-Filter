@@ -488,7 +488,22 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             {activePattern === "structure-bigabove" ? (
               <>
                 <div className="text-xs font-semibold text-primary mb-1">BigCPR Above</div>
-                <div className="text-xs text-muted-foreground">Wide CPR Above PCPR — today&apos;s CPR is wider than yesterday&apos;s and trading above it</div>
+                <div className="text-xs text-muted-foreground">Wide CPR Above PCPR — today&apos;s CPR is wider than yesterday&apos;s and present above it</div>
+              </>
+            ) : activePattern === "structure-bigbelow" ? (
+              <>
+                <div className="text-xs font-semibold text-primary mb-1">Big Below</div>
+                <div className="text-xs text-muted-foreground">Wide CPR Below PCPR — today&apos;s CPR is wider than yesterday&apos;s and present below it</div>
+              </>
+            ) : activePattern === "littleabove" ? (
+              <>
+                <div className="text-xs font-semibold text-primary mb-1">LittleCPR Above</div>
+                <div className="text-xs text-muted-foreground">Narrow CPR Above PCPR — today&apos;s CPR is narrower than yesterday&apos;s and present above it</div>
+              </>
+            ) : activePattern === "littlebelow" ? (
+              <>
+                <div className="text-xs font-semibold text-primary mb-1">LittleCPR Below</div>
+                <div className="text-xs text-muted-foreground">Narrow CPR Below PCPR — today&apos;s CPR is narrower than yesterday&apos;s and present below it</div>
               </>
             ) : (
               <>
