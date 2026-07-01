@@ -944,6 +944,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 title="Show only rows where today CPR width is less than 0.1%"
               >
                 {widthFilter === "tiny" ? "✕ Tiny" : "Tiny"}
+              </button>
             </div>
           )}
           </div>
