@@ -849,7 +849,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     ? "border-foreground text-foreground"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
-                title="BigAbove: Compressed inside PU2: Target:U4"
+                title="BigAbove: PL34CL4 AND today R3 above prev R4"
               >
                 {showBigAbovePL34CL4 ? "✕ PL34CL4/U3>PU4" : "PL34CL4/U3>PU4"}
               </button>
@@ -863,7 +863,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     ? "border-sky-400 text-sky-400"
                     : "border-border text-muted-foreground hover:text-foreground"
                 }`}
-                title="BigAbove: Prev S1 inside Today S3/S4 AND Prev R1 inside Today R2/R3"
+                title="BigAbove: Compressed inside PU2: Target:U4"
               >
                 {showBAComp ? "✕ BAComp-l3>pl1/u3>pu1" : "BAComp-l3>pl1/u3>pu1"}
               </button>
