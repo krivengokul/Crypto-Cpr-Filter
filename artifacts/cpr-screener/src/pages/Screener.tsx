@@ -513,12 +513,21 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             )}
           </div>
           <div className="rounded-lg border border-border bg-card p-3">
-            <div className={`text-xs font-semibold mb-1 ${activePattern === "falling" ? "text-destructive" : "text-accent"}`}>
-              {activePattern === "falling" ? "CPR Falling" : activePattern === "inside-value" ? "Inside Value CPR" : "CPR Rising"}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {activePattern === "falling" ? "Bearish directional bias" : activePattern === "inside-value" ? "Breakout potential" : "Bullish directional bias"}
-            </div>
+            {showBAComp && activePattern === "structure-bigabove" ? (
+              <>
+                <div className="text-xs font-semibold text-sky-400 mb-1">Compressed Inside Prev UL2</div>
+                <div className="text-xs text-muted-foreground">U3/U4 inside PU2/PU1 and L4 inside PL1/PL2</div>
+              </>
+            ) : (
+              <>
+                <div className={`text-xs font-semibold mb-1 ${activePattern === "falling" ? "text-destructive" : "text-accent"}`}>
+                  {activePattern === "falling" ? "CPR Falling" : activePattern === "inside-value" ? "Inside Value CPR" : "CPR Rising"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {activePattern === "falling" ? "Bearish directional bias" : activePattern === "inside-value" ? "Breakout potential" : "Bullish directional bias"}
+                </div>
+              </>
+            )}
           </div>
           <div className="rounded-lg border border-border bg-card p-3">
             {showBAComp && activePattern === "structure-bigabove" ? (
@@ -874,7 +883,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 }`}
                 title="BigAbove: Compressed inside PU2: Target:U4"
               >
-                {showBAComp ? "✕ BAComp-l3>pl1/u3>pu1" : "BAComp-l3>pl1/u3>pu1"}
+                {showBAComp ? "✕ Inside PUL2" : "Inside PUL2"}
               </button>
             )}
           </div>
