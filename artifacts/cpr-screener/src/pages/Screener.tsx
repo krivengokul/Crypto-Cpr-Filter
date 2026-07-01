@@ -64,7 +64,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [showLBBothTiny, setShowLBBothTiny] = useState(false);
   const [showLBAllUp, setShowLBAllUp] = useState(false);
   const [pivotLevelFilter, setPivotLevelFilter] = useState<PivotLevelInfo["label"] | null>(null);
-  const [widthFilter, setWidthFilter] = useState<"mini" | "tiny" | null>(null);
+  const [widthFilter, setWidthFilter] = useState<"mini" | "tiny" | "pmini" | "ptiny" | null>(null);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -417,6 +417,8 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     .filter((r) => {
       if (widthFilter === "tiny") return r.todayCPR.widthPct < 0.1;
       if (widthFilter === "mini") return r.todayCPR.widthPct >= 0.1 && r.todayCPR.widthPct < 0.5;
+      if (widthFilter === "ptiny") return r.prevCPR.widthPct < 0.1;
+      if (widthFilter === "pmini") return r.prevCPR.widthPct >= 0.1 && r.prevCPR.widthPct < 0.5;
       return true;
     })
     .slice()
@@ -696,7 +698,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <span className="ml-1 text-foreground">(Pivot Level: {pivotLevelFilter})</span>
               )}
               {widthFilter && (
-                <span className="ml-1 text-foreground">(Width: {widthFilter === "tiny" ? "Tiny <0.1%" : "Mini 0.1–0.5%"})</span>
+                <span className="ml-1 text-foreground">(Width: {widthFilter === "tiny" ? "Tiny <0.1%" : widthFilter === "mini" ? "Mini 0.1–0.5%" : widthFilter === "ptiny" ? "pTiny <0.1%" : "pMini 0.1–0.5%"})</span>
               )}
             </span>
 
@@ -952,6 +954,28 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
               >
                 {widthFilter === "tiny" ? "✕ Tiny" : "Tiny"}
               </button>
+              <button
+                onClick={() => setWidthFilter((v) => (v === "pmini" ? null : "pmini"))}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  widthFilter === "pmini"
+                    ? "border-teal-400 text-teal-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Show only rows where prev day CPR width is between 0.1% and 0.5%"
+              >
+                {widthFilter === "pmini" ? "✕ pMini" : "pMini"}
+              </button>
+              <button
+                onClick={() => setWidthFilter((v) => (v === "ptiny" ? null : "ptiny"))}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  widthFilter === "ptiny"
+                    ? "border-purple-400 text-purple-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Show only rows where prev day CPR width is less than 0.1%"
+              >
+                {widthFilter === "ptiny" ? "✕ pTiny" : "pTiny"}
+              </button>
             </div>
           )}
           </div>
@@ -1110,6 +1134,12 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                               )}
                               {r.todayCPR.widthPct >= 0.1 && r.todayCPR.widthPct < 0.5 && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 font-medium">Mini</span>
+                              )}
+                              {r.prevCPR.widthPct < 0.1 && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-400/20 font-medium">pTiny</span>
+                              )}
+                              {r.prevCPR.widthPct >= 0.1 && r.prevCPR.widthPct < 0.5 && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-400/20 font-medium">pMini</span>
                               )}
                               {(() => {
                                 const pl = getPivotLevel(r);
