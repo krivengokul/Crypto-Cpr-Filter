@@ -1,6 +1,6 @@
 import type { CPRLevels, CPRResult } from "@/lib/cpr";
 
-export type SortKey = "symbol" | "compressionRatio" | "currentPrice" | "change24h" | "quoteVolume" | "priceVsCpr";
+export type SortKey = "symbol" | "compressionRatio" | "currentPrice" | "change24h" | "quoteVolume" | "priceVsCpr" | "cprDistance";
 export type SortDir = "asc" | "desc";
 export type ActiveTab = "binance" | "delta" | "combined";
 
@@ -35,6 +35,29 @@ export function priceVsCprValue(r: CPRResultWithSource): number {
   return 0;
 }
 
+/**
+ * DISTANCE% — gap between today's and previous day's CPR bands, as a
+ * percentage, only when the CPR has clearly shifted (Above/Below):
+ *   CPR Above (cprRising):  gap between prevCPR.tc and todayCPR.bc,
+ *                            expressed as % of prevCPR.tc
+ *   CPR Below (cprFalling): gap between todayCPR.tc and prevCPR.bc,
+ *                            expressed as % of todayCPR.tc
+ * Returns null for all other conditions (overlapping/inside/outside CPR etc).
+ */
+export function cprDistancePct(r: CPRResult): number | null {
+  if (r.cprRising) {
+    const prevTc = r.prevCPR.tc;
+    const todayBc = r.todayCPR.bc;
+    return ((todayBc - prevTc) / prevTc) * 100;
+  }
+  if (r.cprFalling) {
+    const todayTc = r.todayCPR.tc;
+    const prevBc = r.prevCPR.bc;
+    return ((prevBc - todayTc) / todayTc) * 100;
+  }
+  return null;
+}
+
 export function getVal(r: CPRResultWithSource, key: SortKey): number | string {
   switch (key) {
     case "symbol":          return r.symbol;
@@ -43,6 +66,7 @@ export function getVal(r: CPRResultWithSource, key: SortKey): number | string {
     case "change24h":       return r.change24h;
     case "quoteVolume":     return r.quoteVolume;
     case "priceVsCpr":      return priceVsCprValue(r);
+    case "cprDistance":     return cprDistancePct(r) ?? -Infinity;
   }
 }
 

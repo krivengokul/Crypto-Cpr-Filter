@@ -33,6 +33,7 @@ import {
   getChartUrl,
   passesPattern,
   distanceFromCPR,
+  cprDistancePct,
   getPivotLevel,
   type PivotLevelInfo,
   SRLadder,
@@ -1008,6 +1009,12 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                     >
                       Price vs CPR <SortIcon k="priceVsCpr" />
                     </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground"
+                      onClick={() => toggleSort("cprDistance")}
+                    >
+                      Distance % <SortIcon k="cprDistance" />
+                    </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Signals
                     </th>
@@ -1076,6 +1083,17 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                           </td>
                           <td className={`px-4 py-3 whitespace-nowrap text-xs font-medium ${distanceFromCPR(r.currentPrice, r.todayCPR.tc, r.todayCPR.bc).color}`}>
                             {distanceFromCPR(r.currentPrice, r.todayCPR.tc, r.todayCPR.bc).label}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-xs font-mono font-medium">
+                            {(() => {
+                              const dist = cprDistancePct(r);
+                              if (dist === null) return <span className="text-muted-foreground">—</span>;
+                              return (
+                                <span className={r.cprRising ? "text-blue-400" : "text-orange-400"}>
+                                  {dist.toFixed(2)}%
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
