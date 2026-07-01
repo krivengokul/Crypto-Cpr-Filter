@@ -521,8 +521,17 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             </div>
           </div>
           <div className="rounded-lg border border-border bg-card p-3">
-            <div className="text-xs font-semibold text-chart-3 mb-1">Candle Selection</div>
-            <div className="text-xs text-muted-foreground">Previous completed UTC daily candle · matches TradingView ADK</div>
+            {showBAComp && activePattern === "structure-bigabove" ? (
+              <>
+                <div className="text-xs font-semibold text-emerald-400 mb-1">Target</div>
+                <div className="text-xs text-muted-foreground">These coins have the potential to go up to U4</div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs font-semibold text-chart-3 mb-1">Candle Selection</div>
+                <div className="text-xs text-muted-foreground">Previous completed UTC daily candle · matches TradingView ADK</div>
+              </>
+            )}
           </div>
         </div>
 
