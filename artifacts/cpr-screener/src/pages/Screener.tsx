@@ -64,6 +64,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [showLBBothTiny, setShowLBBothTiny] = useState(false);
   const [showLBAllUp, setShowLBAllUp] = useState(false);
   const [pivotLevelFilter, setPivotLevelFilter] = useState<PivotLevelInfo["label"] | null>(null);
+  const [widthFilter, setWidthFilter] = useState<"mini" | "tiny" | null>(null);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState("");
   const [nextScanUtc, setNextScanUtc] = useState<Date>(getNextScanIST());
@@ -413,6 +414,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const displayed = getActivePool()
     .filter((r) => r.symbol.toLowerCase().includes(search.toLowerCase()))
     .filter((r) => !pivotLevelFilter || getPivotLevel(r)?.label === pivotLevelFilter)
+    .filter((r) => {
+      if (widthFilter === "tiny") return r.todayCPR.widthPct < 0.1;
+      if (widthFilter === "mini") return r.todayCPR.widthPct >= 0.1 && r.todayCPR.widthPct < 0.5;
+      return true;
+    })
     .slice()
     .sort((a, b) => {
       const av = getVal(a, sortKey);
@@ -455,7 +461,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     showOutsideCPRCompressed || showInsideCPRExpanded ||
     showBigBelowPMiniPL3 || showBigAbovePL34CL4 || showBAComp || showLBCmprss || showLBC34 ||
     showLBBothTiny || showLBAllUp ||
-    !!pivotLevelFilter;
+    !!pivotLevelFilter || !!widthFilter;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -682,6 +688,9 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
               {pivotLevelFilter && (
                 <span className="ml-1 text-foreground">(Pivot Level: {pivotLevelFilter})</span>
               )}
+              {widthFilter && (
+                <span className="ml-1 text-foreground">(Width: {widthFilter === "tiny" ? "Tiny <0.1%" : "Mini 0.1–0.5%"})</span>
+              )}
             </span>
 
             {/* Show All button */}
@@ -702,6 +711,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 setShowLBBothTiny(false);
                 setShowLBAllUp(false);
                 setPivotLevelFilter(null);
+                setWidthFilter(null);
               }}
               className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -913,6 +923,27 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                   {pivotLevelFilter === label ? `✕ ${label}` : label}
                 </button>
               ))}
+              <button
+                onClick={() => setWidthFilter((v) => (v === "mini" ? null : "mini"))}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  widthFilter === "mini"
+                    ? "border-teal-400 text-teal-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Show only rows where today CPR width is between 0.1% and 0.5%"
+              >
+                {widthFilter === "mini" ? "✕ Mini" : "Mini"}
+              </button>
+              <button
+                onClick={() => setWidthFilter((v) => (v === "tiny" ? null : "tiny"))}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  widthFilter === "tiny"
+                    ? "border-purple-400 text-purple-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Show only rows where today CPR width is less than 0.1%"
+              >
+                {widthFilter === "tiny" ? "✕ Tiny" : "Tiny"}
             </div>
           )}
           </div>
