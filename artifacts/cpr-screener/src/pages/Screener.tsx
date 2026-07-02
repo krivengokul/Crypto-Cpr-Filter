@@ -652,16 +652,17 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <div className="text-xs font-semibold text-sky-400 mb-1">U1 &gt; Previous U4</div>
                 <div className="text-xs text-muted-foreground">Todays U1&gt; Previous U4</div>
               </>
-            ) : (
+            ) : activePattern === "falling" ? (
               <>
-                <div className={`text-xs font-semibold mb-1 ${activePattern === "falling" ? "text-destructive" : "text-accent"}`}>
-                  {activePattern === "falling" ? "CPR Falling" : activePattern === "inside-value" ? "Inside Value CPR" : "CPR Rising"}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {activePattern === "falling" ? "Bearish directional bias" : activePattern === "inside-value" ? "Breakout potential" : "Bullish directional bias"}
-                </div>
+                <div className="text-xs font-semibold mb-1 text-destructive">CPR Falling</div>
+                <div className="text-xs text-muted-foreground">Bearish directional bias</div>
               </>
-            )}
+            ) : activePattern === "inside-value" ? (
+              <>
+                <div className="text-xs font-semibold mb-1 text-accent">Inside Value CPR</div>
+                <div className="text-xs text-muted-foreground">Breakout potential</div>
+              </>
+            ) : null}
           </div>
           <div className="rounded-lg border border-border bg-card p-3">
             {showBAComp && activePattern === "structure-bigabove" ? (
@@ -679,12 +680,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <div className="text-xs font-semibold text-emerald-400 mb-1">Breakout</div>
                 <div className="text-xs text-muted-foreground">Today&apos;s R1 has broken above yesterday&apos;s R4 — strong bullish momentum</div>
               </>
-            ) : (
-              <>
-                <div className="text-xs font-semibold text-chart-3 mb-1">Candle Selection</div>
-                <div className="text-xs text-muted-foreground">Previous completed UTC daily candle · matches TradingView ADK</div>
-              </>
-            )}
+            ) : null}
           </div>
         </div>
 
