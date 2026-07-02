@@ -48,7 +48,8 @@ export const patterns: Pattern[] = [
   { id: "outside-cpr",        label: "Outside CPR",         subtitle: "Outside CPR range",        icon: Maximize2 },
   { id: "lower-bullish",      label: "LowerCPR Bullish",    subtitle: "Higher highs forming",      icon: BarChart2 },
   { id: "structure-bigabove", label: "BIGCPR ABOVE",        subtitle: "Wide CPR Above PCPR",       icon: BarChart },
-  { id: "HA-U1>PU4",          label: "U1 > Previous U4",    subtitle: "Todays U1> Previous U4",    icon: BarChart2 },
+  // hidden — accessible via U1>PU4 button on BigCPR Above
+  // { id: "HA-U1>PU4",          label: "U1 > Previous U4",    subtitle: "Todays U1> Previous U4",    icon: BarChart2 },
   { id: "HAThin-U1>PU4",      label: "U1>PU4 Bullish",      subtitle: "Higher highs forming",      icon: BarChart2 },
   { id: "structure-bigbelow", label: "Big Below",  subtitle: "Wide CPR Below PCPR",      icon: BarChart },
   // hidden — L1<PL1, PU12CU23

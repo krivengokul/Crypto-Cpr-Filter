@@ -68,6 +68,8 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const [showBigAbovePL34CL4, setShowBigAbovePL34CL4] = useState(false);
   // NEW: BigCPR Above — BAComp-l3>pl1/u3>pu1 filter state
   const [showBAComp, setShowBAComp] = useState(false);
+  // NEW: U1>PU4 filter state (formerly a left-nav pattern, now a toggle inside BigCPR Above)
+  const [showHAU1, setShowHAU1] = useState(false);
   // NEW: LB Compressed filter state
   const [showLBCmprss, setShowLBCmprss] = useState(false);
   const [showLBC34, setShowLBC34] = useState(false);
@@ -321,7 +323,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
     if (activePattern !== "inside-cpr") { setShowInsideCPRExpanded(false); }
     if (activePattern !== "overlapping-lower") { setShowExpr4Pr4(false); }
     if (activePattern !== "structure-bigbelow") { setShowBigBelowPMiniPL3(false); setShowBigBelowPMiniRising(false); pMiniRisingAlertedRef.current.clear(); }
-    if (activePattern !== "structure-bigabove") { setShowBigAbovePL34CL4(false); setShowBAComp(false); }
+    if (activePattern !== "structure-bigabove") { setShowBigAbovePL34CL4(false); setShowBAComp(false); setShowHAU1(false); }
     // Reset LB Compressed / LB-BothTiny / LB-AllUp when leaving littlebelow
     if (activePattern !== "littlebelow") { setShowLBCmprss(false); setShowLBBothTiny(false); setShowLBAllUp(false); }
   }, [activePattern, allResults, deltaAllResults]);
@@ -427,6 +429,18 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
         .map((r) => ({ ...r, source: "binance" as const }));
       const deltaIntersect = deltaAllResults
         .filter((r) => passesPattern(r, "bacomp-l3>pl1/u3>pu1"))
+        .map((r) => ({ ...r, source: "delta" as const }));
+      if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
+      if (activeTab === "delta") return deltaIntersect;
+      return binanceIntersect;
+    }
+    // NEW: U1>PU4 pool — BigCPR Above, today's R1 above prev day's R4
+    if (showHAU1 && activePattern === "structure-bigabove") {
+      const binanceIntersect = allResults
+        .filter((r) => passesPattern(r, "HA-U1>PU4"))
+        .map((r) => ({ ...r, source: "binance" as const }));
+      const deltaIntersect = deltaAllResults
+        .filter((r) => passesPattern(r, "HA-U1>PU4"))
         .map((r) => ({ ...r, source: "delta" as const }));
       if (activeTab === "combined") return [...binanceIntersect, ...deltaIntersect];
       if (activeTab === "delta") return deltaIntersect;
@@ -548,7 +562,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
   const anySubFilter =
     showLABothTiny || showLAAllUp || showLAPL12CL23 || showLAExpando ||
     showOutsideCPRCompressed || showInsideCPRExpanded ||
-    showBigBelowPMiniPL3 || showBigBelowPMiniRising || showBigAbovePL34CL4 || showBAComp || showLBCmprss || showLBC34 ||
+    showBigBelowPMiniPL3 || showBigBelowPMiniRising || showBigAbovePL34CL4 || showBAComp || showHAU1 || showLBCmprss || showLBC34 ||
     showLBBothTiny || showLBAllUp ||
     !!pivotLevelFilter || !!widthFilter;
 
@@ -633,6 +647,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 <div className="text-xs font-semibold text-sky-400 mb-1">Expanded</div>
                 <div className="text-xs text-muted-foreground">Prev R4 between today&apos;s R3/R4 and Prev S4 between today&apos;s S3/S4 with today&apos;s CPR Mini</div>
               </>
+            ) : showHAU1 && activePattern === "structure-bigabove" ? (
+              <>
+                <div className="text-xs font-semibold text-sky-400 mb-1">U1 &gt; Previous U4</div>
+                <div className="text-xs text-muted-foreground">Todays U1&gt; Previous U4</div>
+              </>
             ) : (
               <>
                 <div className={`text-xs font-semibold mb-1 ${activePattern === "falling" ? "text-destructive" : "text-accent"}`}>
@@ -654,6 +673,11 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
               <>
                 <div className="text-xs font-semibold text-emerald-400 mb-1">Target</div>
                 <div className="text-xs text-muted-foreground">These coins have the potential to go up to U4</div>
+              </>
+            ) : showHAU1 && activePattern === "structure-bigabove" ? (
+              <>
+                <div className="text-xs font-semibold text-emerald-400 mb-1">Breakout</div>
+                <div className="text-xs text-muted-foreground">Today&apos;s R1 has broken above yesterday&apos;s R4 — strong bullish momentum</div>
               </>
             ) : (
               <>
@@ -790,6 +814,9 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
               {showBAComp && activePattern === "structure-bigabove" && (
                 <span className="ml-1 text-sky-400">(BAComp-l3&gt;pl1/u3&gt;pu1)</span>
               )}
+              {showHAU1 && activePattern === "structure-bigabove" && (
+                <span className="ml-1 text-emerald-400">(U1&gt;PU4)</span>
+              )}
               {showLBCmprss && activePattern === "littlebelow" && (
                 <span className="ml-1 text-violet-400">(LB-Compressed: L4&gt;PL3/U4&lt;PU2)</span>
               )}
@@ -824,6 +851,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 setShowBigBelowPMiniRising(false);
                 setShowBigAbovePL34CL4(false);
                 setShowBAComp(false);
+                setShowHAU1(false);
                 setShowLBCmprss(false);
                 setShowLBC34(false);
                 setShowLBBothTiny(false);
@@ -1065,7 +1093,7 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
             {/* NEW: BAComp-l3>pl1/u3>pu1 button — inside BigCPR Above, next to Show All */}
             {activePattern === "structure-bigabove" && !showAll && (
               <button
-                onClick={() => { setShowBAComp((v) => !v); setShowBigAbovePL34CL4(false); }}
+                onClick={() => { setShowBAComp((v) => !v); setShowBigAbovePL34CL4(false); setShowHAU1(false); }}
                 className={`text-xs px-2.5 py-1 rounded border transition-colors ${
                   showBAComp
                     ? "border-sky-400 text-sky-400"
@@ -1074,6 +1102,20 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                 title="BigAbove: Compressed inside PU2: Target:U4"
               >
                 {showBAComp ? "✕ Inside PUL2" : "Inside PUL2"}
+              </button>
+            )}
+            {/* NEW: U1>PU4 button — inside BigCPR Above, next to Inside PUL2 (moved from left-nav) */}
+            {activePattern === "structure-bigabove" && !showAll && (
+              <button
+                onClick={() => { setShowHAU1((v) => !v); setShowBigAbovePL34CL4(false); setShowBAComp(false); }}
+                className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                  showHAU1
+                    ? "border-emerald-400 text-emerald-400"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+                title="Todays U1> Previous U4"
+              >
+                {showHAU1 ? "✕ U1>PU4" : "U1>PU4"}
               </button>
             )}
           </div>
