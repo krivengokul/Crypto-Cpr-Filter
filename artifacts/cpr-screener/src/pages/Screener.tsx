@@ -1361,8 +1361,14 @@ export default function Screener({ activePattern = "littleabove", scanKey = 0 }:
                               {r.cprRising && activePattern !== "littleabove" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">Above</span>
                               )}
+                              {r.cprRising && r.strWideCPR && activePattern === "structure-bigabove" && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">Wide</span>
+                              )}
                               {r.cprFalling && activePattern !== "littlebelow" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-medium">Below</span>
+                              )}
+                              {r.cprFalling && r.strWideCPR && activePattern === "structure-bigbelow" && (
+                                <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">Wide</span>
                               )}
                               {passesPattern(r, "inside-value") && activePattern === "inside-value" && (
                                 <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">Inside</span>
